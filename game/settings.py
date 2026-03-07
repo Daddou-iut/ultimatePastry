@@ -145,6 +145,11 @@ CORS_ALLOWED_ORIGINS = [
     "https://ultimate-pastry.vercel.app",
 ]
 
+# Autorise aussi les URLs de preview Vercel (ex: ultimate-pastry-xxxx.vercel.app)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
+
 # Permet l'envoi de cookies et credentials
 CORS_ALLOW_CREDENTIALS = True
 
