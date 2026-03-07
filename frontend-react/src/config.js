@@ -1,19 +1,22 @@
 // Configuration API
 // Localhost → localhost:8000
 // Réseau local → 10.192.125.97:8000
-// Production (Vercel) → Render backend
+// Production (HTTPS) → Render backend HTTPS
 
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const isLocalNetwork = window.location.hostname === '10.192.125.97';
+const hostname = window.location.hostname;
+const isHttps = window.location.protocol === 'https:';
 
 let API_URL;
 
-if (isLocalhost) {
+if (hostname === 'localhost' || hostname === '127.0.0.1') {
   API_URL = 'http://localhost:8000/api';
-} else if (isLocalNetwork) {
+} else if (hostname === '10.192.125.97') {
   API_URL = 'http://10.192.125.97:8000/api';
+} else if (isHttps) {
+  // Production HTTPS : utilise Render HTTPS
+  API_URL = 'https://ultimatepastry.onrender.com/api';
 } else {
-  // Production : utilise Render
+  // Fallback
   API_URL = 'https://ultimatepastry.onrender.com/api';
 }
 
