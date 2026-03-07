@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Pâtisserie - Packs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/static/cardGenerator.js"></script>
+    <style>
+        .pack-flip-card {
+            perspective: 1000px;
+            width: 250px;
+            height: 300px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .pack-flip-card.locked {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .pack-flip-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .pack-flip-card.flipped .pack-flip-inner {
+            transform: rotateY(180deg);
+        }
+
+        .pack-flip-face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+        }
+
+        .pack-flip-front {
+            background: linear-gradient(135deg, #ec4899, #a855f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .pack-flip-back {
+            transform: rotateY(180deg);
+            background: #fff;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pack-svg-wrap {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pack-svg-wrap svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen pt-24 pb-32" style="background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/static/background2.png'); background-size: cover; background-attachment: fixed; background-position: center;">
+    <div id="header-placeholder" class="fixed top-0 left-0 right-0 z-50"></div>
+    <script src="/static/header.js"></script>
+    <script>
+        // Charger le header.html
+        fetch('/static/header.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('header-placeholder').innerHTML = html;
+            });
+    </script>
+
+    <!-- CONTENU PRINCIPAL -->
+    <div class="flex-1 flex flex-row items-center bg-white bg-opacity-80 rounded-2xl shadow-lg p-6 max-w-4xl w-full mx-auto my-5">
+        <div class="w-full">
+            <h2 class="text-4xl font-bold text-gray-800 mb-6 text-center">
+                <i class="fas fa-box-open text-pink-500"></i> Shop de Packs
+            </h2>
+            <div id="packs-content" class="text-gray-600 text-center">
+                <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                <p>Chargement des packs disponibles...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="bottom-nav-placeholder" class="fixed bottom-0 left-0 right-0 z-50" data-active="packs"></div>
+    <script src="/static/bottomNav.js"></script>
+
+    <script>
+        function onPageLoad() {
+            // Charger les packs au démarrage
+            loadPacks();
+        }
+
+        // Charger les packs
+        async function loadPacks() {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch('http://localhost:8000/api/packs/', {
+                    headers: {
+                        'Authorization': 'Token ' + token
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.length > 0) {
+                    displayPacks(data);
+                } else {
+                    document.getElementById('packs-content').innerHTML = 
+                        '<div class="text-center py-8 text-gray-500"><i class="fas fa-box-open text-6xl mb-4"></i><p class="text-xl">Aucun pack disponible...</p></div>';
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('packs-content').innerHTML = 
+                    '<div class="text-center py-8 text-red-500"><i class="fas fa-exclamation-triangle text-4xl mb-4"></i><p>Erreur de chargement</p></div>';
+            }
+        }
+
+        // Afficher les packs
+        function displayPacks(packs) {
+            const packIcons = {
+                'bronze': 'fa-box',
+                'silver': 'fa-box-open',
+                'gold': 'fa-gift'
+            };
+            
+            const html = packs.map(pack => {
+                return `
+                    <div class="bg-gradient-to-br from-pink-100 to-purple-100 p-6 rounded-lg shadow-lg border-2 border-pink-300">
+                        <div class="text-center mb-4">
+                            <i class="fas ${packIcons[pack.level] || 'fa-box'} text-5xl text-pink-500"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 text-center">${pack.level.toUpperCase()} Pack</h3>
+                        <div class="text-gray-600 text-sm mb-2 text-center">
+                            <i class="fas fa-layer-group"></i> ${pack.cards_count} cartes
+                        </div>
+                        <div class="text-gray-600 text-sm mb-4 text-center">
+                            <i class="fas fa-star"></i> Rareté: ${pack.rarity_boost}
+                        </div>
+                        <div class="bg-gradient-to-r from-yellow-400 to-orange-400 text-white py-2 rounded-full text-center font-bold mb-4">
+                            <i class="fas fa-coins"></i> ${pack.cost} coins
+                        </div>
+                        <button class="w-full bg-pink-500 text-white py-3 rounded-lg font-bold hover:bg-pink-600 transition flex items-center justify-center gap-2" onclick="openPack(${pack.id})">
+                            <i class="fas fa-gift"></i>
+                            Ouvrir ce pack
+                        </button>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('packs-content').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${html}</div>`;
+        }
+
+        // Ouvrir un pack
+        async function openPack(packId) {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`http://localhost:8000/api/packs/${packId}/open/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Token ' + token,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showPackResults(data.cards);
+                } else {
+                    alert('Erreur: ' + (data.error || 'Impossible d\'ouvrir le pack'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Erreur serveur');
+            }
+        }
+
+        // Afficher les cartes obtenues
+        function showPackResults(cards) {
+            let currentIndex = 0;
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[95vh] overflow-y-auto">
+                    <h3 class="text-4xl font-bold text-center mb-4 text-pink-600">
+                        <i class="fas fa-star"></i> PACK OUVERT ! <i class="fas fa-star"></i>
+                    </h3>
+                    <p class="text-center text-lg text-gray-600 mb-2">Carte <span id="card-count">${currentIndex + 1}</span>/${cards.length}</p>
+                    
+                    <div class="flex items-center justify-center gap-6 mb-8">
+                        <button id="prev-btn" class="bg-gray-400 text-white py-2 px-4 rounded-lg font-bold transition opacity-50 cursor-not-allowed" disabled>
+                            <i class="fas fa-chevron-left"></i> Précédent
+                        </button>
+                        
+                        <div id="card-container" class="flex justify-center" style="height: 400px; width: 300px;">
+                            <!-- La carte sera générée ici -->
+                        </div>
+                        
+                        <button id="next-btn" class="bg-gray-400 text-white py-2 px-4 rounded-lg font-bold transition opacity-50 cursor-not-allowed" disabled>
+                            Suivant <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <button 
+                        id="close-pack-modal"
+                        class="w-full bg-pink-500 text-white py-3 rounded-lg font-bold hover:bg-pink-600 transition text-lg"
+                    >
+                        <i class="fas fa-check"></i> Fermer
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            const cardContainer = modal.querySelector('#card-container');
+            const prevBtn = modal.querySelector('#prev-btn');
+            const nextBtn = modal.querySelector('#next-btn');
+            const cardCountSpan = modal.querySelector('#card-count');
+            const closeBtn = modal.querySelector('#close-pack-modal');
+
+            function renderCard() {
+                const cardInstance = cards[currentIndex];
+                const card = cardInstance.card || cardInstance;
+                const cardLevel = cardInstance.level || card.level || 1;
+                let svg;
+                try {
+                    svg = generateCardSVG({ ...card, level: cardLevel, id: cardInstance.id || card.id || currentIndex + 1 });
+                } catch (e) {
+                    svg = `<div class="w-full h-full bg-gray-100 flex items-center justify-center text-gray-700 font-bold p-4 text-center">${card.name || 'Carte inconnue'}</div>`;
+                }
+
+                // Désactiver les deux boutons pour la nouvelle carte
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                prevBtn.classList.remove('hover:bg-pink-600', 'bg-pink-500');
+                nextBtn.classList.remove('hover:bg-pink-600', 'bg-pink-500');
+                prevBtn.classList.add('bg-gray-400');
+                nextBtn.classList.add('bg-gray-400');
+
+                cardContainer.innerHTML = `
+                    <div class="pack-flip-card" style="width: 100%; height: 100%;" data-flipped="false">
+                        <div class="pack-flip-inner">
+                            <div class="pack-flip-face pack-flip-front">
+                                <i class="fas fa-gift text-4xl mb-3"></i>
+                                <div class="font-bold text-lg">Carte Mystère</div>
+                                <div class="text-sm opacity-90 mt-2">Clique pour révéler</div>
+                            </div>
+                            <div class="pack-flip-face pack-flip-back">
+                                <div class="pack-svg-wrap">${svg}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const cardEl = cardContainer.querySelector('.pack-flip-card');
+                cardEl.addEventListener('click', () => {
+                    if (cardEl.dataset.flipped === 'false') {
+                        cardEl.classList.add('flipped');
+                        cardEl.dataset.flipped = 'true';
+                        
+                        // Activer les boutons quand on retourne la carte
+                        // Précédent: actif sauf si première carte
+                        if (currentIndex > 0) {
+                            prevBtn.disabled = false;
+                            prevBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+                            prevBtn.classList.add('hover:bg-pink-600', 'bg-pink-500');
+                        }
+                        
+                        // Suivant: actif sauf si dernière carte
+                        if (currentIndex < cards.length - 1) {
+                            nextBtn.disabled = false;
+                            nextBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+                            nextBtn.classList.add('hover:bg-pink-600', 'bg-pink-500');
+                        }
+                    }
+                });
+
+                cardCountSpan.textContent = currentIndex + 1;
+                
+                // Afficher/masquer le bouton Fermer selon si c'est la dernière carte
+                if (currentIndex === cards.length - 1) {
+                    closeBtn.classList.remove('hidden');
+                } else {
+                    closeBtn.classList.add('hidden');
+                }
+            }
+
+            nextBtn.addEventListener('click', () => {
+                if (currentIndex < cards.length - 1) {
+                    currentIndex++;
+                    renderCard();
+                }
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    renderCard();
+                }
+            });
+
+            closeBtn.addEventListener('click', () => {
+                modal.remove();
+                loadPlayerInfo();
+                loadPacks();
+            });
+
+            renderCard();
+        }
+    </script>
+</body>
+</html>

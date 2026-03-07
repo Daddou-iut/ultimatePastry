@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace - Ultimate Pâtisserie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/static/cardGenerator.js"></script>
+</head>
+<body class="flex flex-col min-h-screen pt-24 pb-32" style="background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/static/background2.png'); background-size: cover; background-attachment: fixed; background-position: center;">
+    <div id="header-placeholder" class="fixed top-0 left-0 right-0 z-50"></div>
+    <script src="/static/header.js"></script>
+    <script>
+        fetch('/static/header.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('header-placeholder').innerHTML = html;
+            });
+    </script>
+
+    <!-- CONTENU PRINCIPAL -->
+    <div class="flex-1 flex flex-col bg-white bg-opacity-80 rounded-2xl shadow-lg p-8 max-w-6xl w-full mx-auto my-5">
+        <h1 class="text-4xl font-bold text-gray-800 flex items-center mb-8">
+            <i class="fas fa-store text-blue-500 mr-2"></i>Marketplace
+        </h1>
+
+        <!-- Onglets -->
+        <div class="flex gap-4 mb-6 border-b">
+            <button id="tab-browse" class="px-6 py-3 font-bold text-lg border-b-4 border-blue-500 text-blue-600 hover:text-blue-700 transition">
+                <i class="fas fa-search mr-2"></i>Parcourir les ventes
+            </button>
+            <button id="tab-my-listings" class="px-6 py-3 font-bold text-lg border-b-4 border-transparent text-gray-600 hover:text-gray-800 transition">
+                <i class="fas fa-list mr-2"></i>Mes annonces
+            </button>
+            <button id="tab-sell" class="px-6 py-3 font-bold text-lg border-b-4 border-transparent text-gray-600 hover:text-gray-800 transition">
+                <i class="fas fa-tag mr-2"></i>Vendre une carte
+            </button>
+        </div>
+
+        <!-- TAB 1: Parcourir les ventes -->
+        <div id="browse-tab" class="block">
+            <div class="mb-4 p-4 bg-blue-50 rounded-lg">
+                <label class="block text-gray-700 font-semibold mb-2">Filtrer par famille</label>
+                <div class="flex gap-2 flex-wrap">
+                    <button class="filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 transition" data-filter="all">Tout</button>
+                    <button class="filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 transition" data-filter="base">Base</button>
+                    <button class="filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 transition" data-filter="cream">Crème</button>
+                    <button class="filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 transition" data-filter="filling">Fourrage</button>
+                    <button class="filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 transition" data-filter="glaze">Glaçage</button>
+                    <button class="filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 transition" data-filter="decoration">Décoration</button>
+                </div>
+            </div>
+
+            <div id="marketplace-listings" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+        </div>
+
+        <!-- TAB 2: Mes annonces -->
+        <div id="my-listings-tab" class="hidden">
+            <div class="mb-4 p-4 bg-green-50 rounded-lg">
+                <p class="text-green-800 font-semibold"><i class="fas fa-info-circle mr-2"></i>Vos cartes en vente et historique</p>
+            </div>
+            <div id="my-own-listings" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+        </div>
+
+        <!-- TAB 3: Vendre une carte -->
+        <div id="sell-tab" class="hidden">
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Sélection de la carte -->
+                <div>
+                    <h2 class="text-2xl font-bold mb-4"><i class="fas fa-hand-holding-heart text-pink-500 mr-2"></i>Choisir une carte à vendre</h2>
+                    <div id="sell-inventory" class="grid grid-cols-2 gap-4"></div>
+                </div>
+
+                <!-- Formulaire de vente -->
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <h2 class="text-2xl font-bold mb-4"><i class="fas fa-receipt text-blue-500 mr-2"></i>Prix de vente</h2>
+                    
+                    <div id="selected-card-display" class="hidden mb-6 p-4 bg-white rounded-lg border-2 border-blue-300">
+                        <div id="selected-card-svg" class="mb-4"></div>
+                        <p id="selected-card-name" class="font-bold text-lg text-gray-800"></p>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-gray-700 font-semibold mb-2">Prix (coins)</label>
+                        <input id="sell-price" type="number" min="1" max="100000" placeholder="Entrez le prix..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        <p class="text-sm text-gray-500 mt-2">💡 Conseil : vérifiez les prix similaires sur le marché</p>
+                    </div>
+
+                    <div id="price-suggestions" class="mb-6 hidden">
+                        <p class="text-gray-700 font-semibold mb-2">Prix recommandés pour cette carte :</p>
+                        <div class="space-y-2">
+                            <button class="suggest-price w-full px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition text-left">
+                                <span class="font-bold">Économique:</span> <span class="price-val">-</span> coins
+                            </button>
+                            <button class="suggest-price w-full px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition text-left">
+                                <span class="font-bold">Standard:</span> <span class="price-val">-</span> coins
+                            </button>
+                            <button class="suggest-price w-full px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition text-left">
+                                <span class="font-bold">Premium:</span> <span class="price-val">-</span> coins
+                            </button>
+                        </div>
+                    </div>
+
+                    <button id="sell-btn" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg font-bold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-check mr-2"></i>Mettre en vente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal d'achat -->
+    <div id="buyModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <h2 class="text-2xl font-bold mb-4"><i class="fas fa-shopping-cart text-green-500 mr-2"></i>Confirmer l'achat</h2>
+            <div id="buy-card-display" class="mb-6"></div>
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                <p class="text-gray-700 text-sm mb-2">Vendeur: <span id="buy-seller-name" class="font-bold"></span></p>
+                <p class="text-gray-700 text-sm mb-2">Prix: <span id="buy-price" class="font-bold text-green-600"></span> coins</p>
+                <p class="text-gray-700 text-sm">Vos coins: <span id="buy-balance" class="font-bold"></span></p>
+            </div>
+            <div class="flex gap-4">
+                <button id="cancelBuy" class="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-bold hover:bg-gray-400">Annuler</button>
+                <button id="confirmBuy" class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg font-bold hover:shadow-lg">Acheter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de vente confirmée -->
+    <div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md text-center">
+            <i class="fas fa-check-circle text-5xl text-green-500 mb-4"></i>
+            <h2 class="text-2xl font-bold mb-2" id="successTitle">Succès!</h2>
+            <p class="text-gray-700 mb-6" id="successMessage"></p>
+            <button id="closeSuccess" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-600">Fermer</button>
+        </div>
+    </div>
+
+    <div id="nav-placeholder" class="fixed bottom-0 left-0 right-0 z-50"></div>
+    <script src="/static/bottomNav.js"></script>
+    <script>
+        fetch('/static/bottomNav.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('nav-placeholder').innerHTML = html;
+            });
+    </script>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+        const token = localStorage.getItem('token');
+
+        let currentFilter = 'all';
+        let selectedCardForSell = null;
+        let selectedListing = null;
+        let allListings = [];
+        let myListings = [];
+        let inventoryCards = [];
+
+        // Vérification authentification
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        // Navigation entre onglets
+        document.getElementById('tab-browse').addEventListener('click', () => switchTab('browse'));
+        document.getElementById('tab-my-listings').addEventListener('click', () => switchTab('my-listings'));
+        document.getElementById('tab-sell').addEventListener('click', () => switchTab('sell'));
+
+        function switchTab(tab) {
+            document.getElementById('browse-tab').classList.toggle('hidden', tab !== 'browse');
+            document.getElementById('my-listings-tab').classList.toggle('hidden', tab !== 'my-listings');
+            document.getElementById('sell-tab').classList.toggle('hidden', tab !== 'sell');
+
+            // Mettre à jour l'apparence des onglets
+            document.querySelectorAll('button[id^="tab-"]').forEach(btn => {
+                const isActive = btn.id === `tab-${tab.replace('-', '-')}`;
+                if (isActive) {
+                    btn.classList.add('border-blue-500', 'text-blue-600');
+                    btn.classList.remove('border-transparent', 'text-gray-600');
+                } else {
+                    btn.classList.remove('border-blue-500', 'text-blue-600');
+                    btn.classList.add('border-transparent', 'text-gray-600');
+                }
+            });
+
+            // Charger les données appropriées
+            if (tab === 'browse') loadMarketplaceListings();
+            if (tab === 'my-listings') loadMyListings();
+            if (tab === 'sell') loadSellTab();
+        }
+
+        // Filtrage
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('bg-blue-500', 'text-white'));
+                e.target.classList.add('bg-blue-500', 'text-white');
+                currentFilter = e.target.getAttribute('data-filter');
+                displayListings(filterListings());
+            });
+        });
+
+        // Charger les annonces du marketplace
+        async function loadMarketplaceListings() {
+            try {
+                const response = await fetch(`${API_URL}/marketplace/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    allListings = await response.json();
+                    console.log('Listings chargés:', allListings);
+                    displayListings(filterListings());
+                } else {
+                    console.error('Erreur API:', response.status);
+                    document.getElementById('marketplace-listings').innerHTML = '<div class="col-span-full text-center py-12"><p class="text-red-600"><i class="fas fa-exclamation-circle mr-2"></i>Erreur lors du chargement (Code: ' + response.status + ')</p></div>';
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                document.getElementById('marketplace-listings').innerHTML = '<div class="col-span-full text-center py-12"><p class="text-red-600"><i class="fas fa-exclamation-circle mr-2"></i>Erreur réseau</p></div>';
+            }
+        }
+
+        // Charger mes annonces
+        async function loadMyListings() {
+            try {
+                const response = await fetch(`${API_URL}/marketplace/my-listings/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    myListings = await response.json();
+                    displayMyListings();
+                } else {
+                    document.getElementById('my-own-listings').innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-600"><i class="fas fa-inbox mr-2"></i>Vous n\'avez aucune annonce</p></div>';
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        // Charger l'onglet vente
+        async function loadSellTab() {
+            try {
+                // Charger l'inventaire
+                const inventoryResponse = await fetch(`${API_URL}/inventory/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                // Charger les annonces de l'utilisateur
+                const listingsResponse = await fetch(`${API_URL}/marketplace/my-listings/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (inventoryResponse.ok) {
+                    inventoryCards = await inventoryResponse.json();
+                    console.log('Cartes chargées:', inventoryCards);
+                    
+                    // Charger les listings pour identifier les cartes en vente
+                    if (listingsResponse.ok) {
+                        myListings = await listingsResponse.json();
+                        console.log('Annonces chargées:', myListings);
+                    }
+                    
+                    displaySellInventory();
+                } else {
+                    console.error('Erreur API inventory:', inventoryResponse.status);
+                    document.getElementById('sell-inventory').innerHTML = '<div class="col-span-full text-center py-6"><p class="text-red-600"><i class="fas fa-exclamation-circle mr-2"></i>Erreur lors du chargement</p></div>';
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                document.getElementById('sell-inventory').innerHTML = '<div class="col-span-full text-center py-6"><p class="text-red-600"><i class="fas fa-exclamation-circle mr-2"></i>Erreur: ' + error.message + '</p></div>';
+            }
+        }
+
+        function filterListings() {
+            if (currentFilter === 'all') return allListings;
+            return allListings.filter(listing => listing.card_instance.card.family === currentFilter);
+        }
+
+        function displayListings(listings) {
+            const container = document.getElementById('marketplace-listings');
+            
+            console.log('displayListings appelé avec', listings ? listings.length : 'null', 'cartes');
+            
+            if (!listings || listings.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-inbox text-6xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600 text-xl">La marketplace est vide</p>
+                        <p class="text-gray-500 text-sm mt-2">Aucune carte n'est actuellement en vente.</p>
+                        <p class="text-gray-500 text-sm">Allez à l'onglet "Vendre une carte" pour en mettre en vente!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            console.log('Affichage de', listings.length, 'cartes');
+            
+            container.innerHTML = listings.map((listing, idx) => {
+                try {
+                    const card = listing.card_instance.card;
+                    const svg = generateCardSVG(card);
+                    
+                    if (!svg) {
+                        console.warn('SVG empty pour la carte', card.name);
+                        return `
+                            <div class="relative bg-white rounded-lg shadow-lg p-4 hover:shadow-xl transition overflow-hidden cursor-pointer group">
+                                <div class="w-full h-64 bg-gray-200 flex items-center justify-center">
+                                    <p class="text-gray-600 text-center text-sm">${card.name}</p>
+                                </div>
+                                <div class="absolute bottom-2 left-2 bg-gray-800 text-white px-2 py-1 rounded text-xs font-bold">
+                                    Lvl ${listing.card_instance.level}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    return `
+                        <div class="relative bg-white rounded-lg shadow-lg p-4 hover:shadow-xl transition overflow-hidden cursor-pointer group">
+                            ${svg}
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3 translate-y-full group-hover:translate-y-0 transition">
+                                <p class="text-white font-bold text-sm">${listing.price} coins</p>
+                                <p class="text-gray-200 text-xs">Lvl ${listing.card_instance.level}</p>
+                                <p class="text-gray-300 text-xs">Par: ${listing.seller.user.username}</p>
+                            </div>
+                            <button class="absolute top-2 right-2 bg-green-500 text-white px-3 py-1 rounded-lg font-bold hover:bg-green-600 transition text-sm opacity-0 group-hover:opacity-100"
+                                    onclick="selectListing(${listing.id})">
+                                <i class="fas fa-shopping-cart mr-1"></i>Acheter
+                            </button>
+                            <div class="absolute bottom-2 left-2 bg-gray-800 text-white px-2 py-1 rounded text-xs font-bold">
+                                Lvl ${listing.card_instance.level}
+                            </div>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('Erreur lors de l\'affichage de la carte', listing.card_instance.card.name, error);
+                    return `
+                        <div class="relative bg-white rounded-lg shadow-lg p-4">
+                            <div class="w-full h-64 bg-red-200 flex items-center justify-center">
+                                <p class="text-red-600 text-center">Erreur carte</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function displayMyListings() {
+            const container = document.getElementById('my-own-listings');
+            
+            if (myListings.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-600"><i class="fas fa-inbox mr-2"></i>Vous n\'avez aucune annonce</p></div>';
+                return;
+            }
+
+            container.innerHTML = myListings.map((listing) => {
+                try {
+                    const card = listing.card_instance.card;
+                    const svg = generateCardSVG(card);
+                    const statusColor = {
+                        'active': 'bg-yellow-100 text-yellow-800',
+                        'sold': 'bg-green-100 text-green-800',
+                        'cancelled': 'bg-gray-100 text-gray-800'
+                    }[listing.status] || 'bg-gray-100 text-gray-800';
+
+                    return `
+                        <div class="relative bg-white rounded-lg shadow-lg p-4 hover:shadow-xl transition overflow-hidden group">
+                            ${svg || `<div class="w-full h-64 bg-gray-200 flex items-center justify-center"><p>${card.name}</p></div>`}
+                            <div class="absolute top-2 left-2 px-2 py-1 rounded text-xs font-bold ${statusColor}">
+                                ${listing.status === 'active' ? 'En vente' : listing.status === 'sold' ? 'Vendue' : 'Annulée'}
+                            </div>
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3 translate-y-full group-hover:translate-y-0 transition">
+                                <p class="text-white font-bold text-sm">${listing.price} coins</p>
+                                <p class="text-gray-200 text-xs">Lvl ${listing.card_instance.level}</p>
+                                ${listing.buyer ? `<p class="text-gray-300 text-xs">Acheté par: ${listing.buyer.user.username}</p>` : ''}
+                            </div>
+                            ${listing.status === 'active' ? `
+                                <button class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg font-bold hover:bg-red-600 transition text-sm opacity-0 group-hover:opacity-100"
+                                        onclick="cancelListing(${listing.id})">
+                                    <i class="fas fa-times mr-1"></i>Annuler
+                                </button>
+                            ` : ''}
+                            <div class="absolute bottom-2 left-2 bg-gray-800 text-white px-2 py-1 rounded text-xs font-bold">
+                                Lvl ${listing.card_instance.level}
+                            </div>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('Erreur affichage annonce:', error);
+                    return `<div class="bg-red-200 p-4 rounded">Erreur</div>`;
+                }
+            }).join('');
+        }
+
+        function displaySellInventory() {
+            const container = document.getElementById('sell-inventory');
+            
+            if (!inventoryCards || inventoryCards.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-inbox text-6xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600 text-lg">Votre inventaire est vide</p>
+                        <p class="text-gray-500 text-sm mt-2">Ouvrez un pack pour obtenir des cartes!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            console.log('Affichage inventaire:', inventoryCards.length, 'cartes');
+            console.log('Listings:', myListings);
+            
+            // Créer une liste des IDs de cartes en vente active
+            const cardsForSale = new Set(
+                myListings
+                    .filter(listing => listing.status === 'active')
+                    .map(listing => listing.card_instance.id || listing.card_instance_id)
+            );
+            
+            console.log('Cartes en vente:', cardsForSale);
+            
+            let html = '';
+            for (const cardInstance of inventoryCards) {
+                const card = cardInstance.card;
+                const isSelected = selectedCardForSell && selectedCardForSell.id === cardInstance.id;
+                const isForSale = cardsForSale.has(cardInstance.id);
+                
+                try {
+                    const svg = generateCardSVG(card);
+                    html += `
+                        <div class="relative bg-white rounded-lg shadow-lg p-2 hover:shadow-xl transition overflow-hidden ${isSelected ? 'ring-4 ring-blue-500' : ''} ${isForSale ? 'ring-4 ring-yellow-500 opacity-60 cursor-not-allowed' : 'cursor-pointer'}"
+                             onclick="${isForSale ? '' : `selectCardForSell(${cardInstance.id})`}">
+                            ${svg || `<div class="w-32 h-40 bg-gray-200 flex items-center justify-center text-xs text-gray-600">${card.name}</div>`}
+                            <div class="absolute bottom-1 left-1 bg-gray-800 text-white px-2 py-1 rounded text-xs font-bold">
+                                Lvl ${cardInstance.level}
+                            </div>
+                            ${isForSale ? `<div class="absolute inset-0 flex items-center justify-center"><div class="bg-yellow-500 text-white px-4 py-2 rounded-lg font-bold text-lg"><i class="fas fa-tag mr-2"></i>En vente</div></div>` : ''}
+                            ${isSelected ? `<div class="absolute top-1 right-1 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center"><i class="fas fa-check"></i></div>` : ''}
+                        </div>
+                    `;
+                } catch (e) {
+                    console.error('Erreur rendu carte:', card.name, e);
+                    html += `<div class="bg-red-100 border border-red-400 p-2 rounded text-red-700 text-xs">${card.name} (Erreur SVG)</div>`;
+                }
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function selectCardForSell(cardInstanceId) {
+            selectedCardForSell = inventoryCards.find(c => c.id === cardInstanceId);
+            document.getElementById('selected-card-display').classList.remove('hidden');
+            document.getElementById('selected-card-svg').innerHTML = generateCardSVG(selectedCardForSell.card);
+            document.getElementById('selected-card-name').textContent = `${selectedCardForSell.card.name} - Niveau ${selectedCardForSell.level}`;
+            
+            // Calculer les prix recommandés
+            calculatePriceSuggestions();
+            
+            displaySellInventory();
+            document.getElementById('sell-btn').disabled = false;
+        }
+
+        function calculatePriceSuggestions() {
+            const rarity = selectedCardForSell.card.rarity;
+            const level = selectedCardForSell.level;
+            
+            const basePrice = {
+                'common': 50,
+                'uncommon': 150,
+                'rare': 400,
+                'epic': 1000
+            }[rarity] || 50;
+            
+            const priceObj = {
+                economique: Math.floor(basePrice * level * 0.4),
+                standard: Math.floor(basePrice * level * 0.7),
+                premium: Math.floor(basePrice * level * 1.0)
+            };
+
+            document.getElementById('price-suggestions').classList.remove('hidden');
+            const buttons = document.querySelectorAll('.suggest-price');
+            buttons[0].querySelector('.price-val').textContent = priceObj.economique;
+            buttons[1].querySelector('.price-val').textContent = priceObj.standard;
+            buttons[2].querySelector('.price-val').textContent = priceObj.premium;
+
+            buttons.forEach((btn, idx) => {
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    const priceValues = [priceObj.economique, priceObj.standard, priceObj.premium];
+                    document.getElementById('sell-price').value = priceValues[idx];
+                };
+            });
+        }
+
+        function selectListing(listingId) {
+            selectedListing = allListings.find(l => l.id === listingId);
+            const card = selectedListing.card_instance.card;
+            const svg = generateCardSVG(card);
+            
+            document.getElementById('buy-card-display').innerHTML = svg;
+            document.getElementById('buy-seller-name').textContent = selectedListing.seller.user.username;
+            document.getElementById('buy-price').textContent = selectedListing.price;
+            
+            // Récupérer le solde du joueur
+            fetch(`${API_URL}/inventory/`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Token ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }).then(r => r.json()).then(inventory => {
+                // Les cartes retournées n'ont pas l'info d'argent, on va supposer que ça marche
+                document.getElementById('buy-balance').textContent = '?';
+            });
+
+            document.getElementById('buyModal').classList.remove('hidden');
+        }
+
+        document.getElementById('cancelBuy').addEventListener('click', () => {
+            document.getElementById('buyModal').classList.add('hidden');
+            selectedListing = null;
+        });
+
+        document.getElementById('confirmBuy').addEventListener('click', buyCard);
+
+        async function buyCard() {
+            if (!selectedListing) return;
+
+            try {
+                const response = await fetch(`${API_URL}/marketplace/buy/${selectedListing.id}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('Achat réussi!', `Vous avez acheté ${selectedListing.card_instance.card.name} pour ${selectedListing.price} coins!`);
+                    document.getElementById('buyModal').classList.add('hidden');
+                    selectedListing = null;
+                    loadMarketplaceListings();
+                } else {
+                    alert('❌ Erreur: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur lors de l\'achat');
+            }
+        }
+
+        document.getElementById('sell-btn').addEventListener('click', sellCard);
+
+        async function sellCard() {
+            if (!selectedCardForSell) {
+                alert('❌ Sélectionnez une carte d\'abord');
+                return;
+            }
+
+            const price = parseInt(document.getElementById('sell-price').value);
+
+            if (!price || price < 1) {
+                alert('❌ Entrez un prix valide');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/marketplace/create/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        card_instance_id: selectedCardForSell.id,
+                        price: price
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('Carte mise en vente!', `${selectedCardForSell.card.name} est maintenant en vente pour ${price} coins!`);
+                    selectedCardForSell = null;
+                    document.getElementById('sell-price').value = '';
+                    document.getElementById('selected-card-display').classList.add('hidden');
+                    loadSellTab();
+                    loadMarketplaceListings();
+                } else {
+                    alert('❌ Erreur: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur lors de la mise en vente');
+            }
+        }
+
+        async function cancelListing(listingId) {
+            if (!confirm('Êtes-vous sûr de vouloir annuler cette annonce?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/marketplace/cancel/${listingId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('Annonce annulée', 'Votre annonce a été supprimée.');
+                    loadMyListings();
+                } else {
+                    alert('❌ Erreur: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur lors de l\'annulation');
+            }
+        }
+
+        function showSuccess(title, message) {
+            document.getElementById('successTitle').textContent = title;
+            document.getElementById('successMessage').textContent = message;
+            document.getElementById('successModal').classList.remove('hidden');
+        }
+
+        document.getElementById('closeSuccess').addEventListener('click', () => {
+            document.getElementById('successModal').classList.add('hidden');
+        });
+
+        // Charger les données initiales
+        loadMarketplaceListings();
+    </script>
+</body>
+</html>

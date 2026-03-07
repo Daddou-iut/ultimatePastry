@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Gâteaux - Ultimate Pâtisserie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/static/cardGenerator.js"></script>
+</head>
+<body class="flex flex-col min-h-screen pt-24 pb-32" style="background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/static/background2.png'); background-size: cover; background-attachment: fixed; background-position: center;">
+    <div id="header-placeholder" class="fixed top-0 left-0 right-0 z-50"></div>
+    <script src="/static/header.js"></script>
+    <script>
+        fetch('/static/header.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('header-placeholder').innerHTML = html;
+            });
+    </script>
+
+    <div class="flex-1 flex gap-6 mx-4">
+        <!-- Mes gâteaux -->
+        <div class="flex-1 bg-white bg-opacity-80 rounded-2xl shadow-lg p-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-4xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-cake-candles text-pink-500 mr-2"></i>Mes Gâteaux
+                </h1>
+                <button id="createTeamBtn" class="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2 rounded-lg font-bold hover:shadow-lg transition">
+                    <i class="fas fa-plus mr-2"></i>Créer un Gâteau
+                </button>
+            </div>
+            <div id="myTeamsList" class="grid grid-cols-3 gap-6"></div>
+        </div>
+    </div>
+
+    <!-- Modal de création de gâteau -->
+    <div id="createTeamModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4">
+        <div class="bg-white rounded-2xl w-full max-w-[95%] max-h-[90vh] overflow-y-auto">
+            <!-- En-tête -->
+            <div class="bg-gradient-to-r from-pink-500 to-purple-600 p-6 rounded-t-2xl">
+                <h2 class="text-3xl font-bold text-white text-center">
+                    <i class="fas fa-wand-magic-sparkles mr-2"></i>Créer un Gâteau
+                </h2>
+                <input type="text" id="teamName" placeholder="Nommez votre gâteau..." 
+                    class="w-full mt-4 px-4 py-3 border-2 border-white rounded-lg focus:outline-none text-lg font-semibold text-center">
+            </div>
+
+            <!-- Zone de prévisualisation du gâteau -->
+            <div class="bg-gradient-to-b from-yellow-50 to-pink-50 p-8 border-b-4 border-pink-300 sticky top-0 z-20">
+                <h3 class="text-center text-xl font-bold text-gray-700 mb-4">
+                    <i class="fas fa-eye mr-2"></i>Aperçu du Gâteau
+                </h3>
+                <div id="cakePreview" class="flex justify-center items-center gap-4 min-h-[150px]">
+                    <div class="text-gray-400 text-center">
+                        <p>Sélectionnez vos ingrédients</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglets de sélection -->
+            <div class="flex border-b-2 border-gray-300 bg-gray-50">
+                <button class="tab-btn flex-1 py-4 px-6 font-bold text-gray-600 hover:bg-white transition border-b-4 border-transparent active" data-tab="base">
+                    <i class="fas fa-layer-group mr-2"></i>Base<span class="text-red-500 ml-1">*</span>
+                </button>
+                <button class="tab-btn flex-1 py-4 px-6 font-bold text-gray-600 hover:bg-white transition border-b-4 border-transparent" data-tab="cream">
+                    <i class="fas fa-ice-cream mr-2"></i>Crème<span class="text-red-500 ml-1">*</span>
+                </button>
+                <button class="tab-btn flex-1 py-4 px-6 font-bold text-gray-600 hover:bg-white transition border-b-4 border-transparent" data-tab="filling">
+                    <i class="fas fa-cookie-bite mr-2"></i>Fourrage
+                </button>
+                <button class="tab-btn flex-1 py-4 px-6 font-bold text-gray-600 hover:bg-white transition border-b-4 border-transparent" data-tab="glaze">
+                    <i class="fas fa-droplet mr-2"></i>Glaçage
+                </button>
+                <button class="tab-btn flex-1 py-4 px-6 font-bold text-gray-600 hover:bg-white transition border-b-4 border-transparent" data-tab="decoration">
+                    <i class="fas fa-star mr-2"></i>Décorations
+                </button>
+            </div>
+
+            <!-- Grille de cartes -->
+            <div class="p-6">
+                <div id="cardsGrid" class="grid grid-cols-6 gap-4 min-h-[300px]">
+                    <!-- Les cartes s'afficheront ici -->
+                </div>
+            </div>
+
+            <!-- Boutons de validation -->
+            <div class="p-6 pb-8 bg-gray-50 flex gap-4 rounded-b-2xl sticky bottom-0 border-t-2 border-gray-200">
+                <button id="cancelCreateTeam" class="flex-1 bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-bold hover:bg-gray-400 text-lg">
+                    <i class="fas fa-times mr-2"></i>Annuler
+                </button>
+                <button id="confirmCreateTeam" class="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-lg font-bold hover:shadow-lg text-lg">
+                    <i class="fas fa-check mr-2"></i>Créer le Gâteau
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="nav-placeholder" class="fixed bottom-0 left-0 right-0 z-50"></div>
+    <script src="/static/bottomNav.js"></script>
+    <script>
+        fetch('/static/bottomNav.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('nav-placeholder').innerHTML = html;
+            });
+    </script>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+        const token = localStorage.getItem('token');
+
+        let allCards = [];
+        let currentTab = 'base';
+        let selectedCards = {
+            base: null,
+            cream: null,
+            filling: null,
+            glaze: null,
+            decorations: []
+        };
+
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        // Charger les gâteaux
+        async function loadTeams() {
+            try {
+                const response = await fetch(`${API_URL}/teams/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayMyTeams(data);
+                } else {
+                    document.getElementById('myTeamsList').innerHTML = '<div class="col-span-full text-center py-12 text-gray-600">Aucun gâteau créé pour le moment...</div>';
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        function displayMyTeams(teams) {
+            const teamsList = document.getElementById('myTeamsList');
+            
+            if (teams.length === 0) {
+                teamsList.innerHTML = '<div class="col-span-full text-center py-12 text-gray-600">Aucun gâteau créé. Cliquez sur "Créer un Gâteau" !</div>';
+                return;
+            }
+
+            teamsList.innerHTML = teams.map(team => {
+                const cards = [];
+                if (team.base) cards.push(team.base);
+                if (team.cream) cards.push(team.cream);
+                if (team.filling) cards.push(team.filling);
+                if (team.glaze) cards.push(team.glaze);
+                if (team.decorations) cards.push(...team.decorations);
+
+                let cardsHTML = '';
+                cards.forEach(cardInst => {
+                    try {
+                        const svg = generateCardSVG(cardInst.card);
+                        if (svg) {
+                            cardsHTML += `<div class="relative w-40 h-40">${svg}</div>`;
+                        }
+                    } catch (error) {
+                        console.error('Erreur SVG:', error);
+                    }
+                });
+
+                return `
+                    <div class="col-span-full bg-white rounded-xl border-4 border-gray-800 p-3 hover:shadow-xl transition relative">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-2xl">${team.name}</h3>
+                            <button onclick="deleteTeam(${team.id})" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold">
+                                <i class="fas fa-trash mr-1"></i>Supprimer
+                            </button>
+                        </div>
+                        <div class="bg-gradient-to-b from-pink-50 to-purple-50 rounded-lg border-2 border-gray-800 p-3">
+                            <div class="flex justify-center items-center gap-4 flex-wrap">
+                                ${cardsHTML}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Ouvrir modal
+        document.getElementById('createTeamBtn').addEventListener('click', async () => {
+            document.getElementById('createTeamModal').classList.remove('hidden');
+            document.getElementById('nav-placeholder').classList.add('hidden');
+            await loadInventory();
+            switchTab('base');
+        });
+
+        // Fermer modal
+        document.getElementById('cancelCreateTeam').addEventListener('click', () => {
+            document.getElementById('createTeamModal').classList.add('hidden');
+            document.getElementById('nav-placeholder').classList.remove('hidden');
+            resetSelection();
+        });
+
+        // Gestion des onglets
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.getAttribute('data-tab');
+                switchTab(tab);
+            });
+        });
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Activer l'onglet visuellement
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-pink-500', 'text-pink-600', 'bg-white');
+                btn.classList.add('text-gray-600');
+            });
+            
+            const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
+            activeBtn.classList.add('active', 'border-pink-500', 'text-pink-600', 'bg-white');
+            activeBtn.classList.remove('text-gray-600');
+
+            // Afficher les cartes de cette famille
+            displayCardsForCurrentTab();
+        }
+
+        // Charger l'inventaire
+        async function loadInventory() {
+            try {
+                const response = await fetch(`${API_URL}/inventory/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+
+                allCards = await response.json();
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        function displayCardsForCurrentTab() {
+            const cardsGrid = document.getElementById('cardsGrid');
+            const cards = allCards.filter(c => c.card.family === currentTab);
+            
+            if (cards.length === 0) {
+                cardsGrid.innerHTML = '<div class="col-span-full text-center text-gray-400 py-12">Aucune carte disponible dans cette catégorie</div>';
+                return;
+            }
+
+            cardsGrid.innerHTML = cards.map(cardInst => {
+                const svg = generateCardSVG(cardInst.card, 0.5);
+                const isSelected = isCardSelected(cardInst.id);
+                
+                return `
+                    <div class="cursor-pointer hover:scale-105 transition border-2 ${isSelected ? 'border-green-500 ring-2 ring-green-300' : 'border-gray-300'} rounded-lg p-2 hover:border-pink-500" 
+                         onclick="selectCard(${cardInst.id})">
+                        ${svg}
+                        <p class="text-xs text-center mt-1 font-semibold">${cardInst.card.name}</p>
+                        <p class="text-xs text-center text-gray-500">Niveau ${cardInst.level}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function isCardSelected(cardId) {
+            if (currentTab === 'decoration') {
+                return selectedCards.decorations.some(c => c.id === cardId);
+            } else {
+                return selectedCards[currentTab]?.id === cardId;
+            }
+        }
+
+        function selectCard(cardInstanceId) {
+            const card = allCards.find(c => c.id === cardInstanceId);
+            
+            if (currentTab === 'decoration') {
+                // Vérifier si déjà sélectionné
+                const alreadySelected = selectedCards.decorations.findIndex(c => c.id === card.id);
+                if (alreadySelected >= 0) {
+                    // Désélectionner
+                    selectedCards.decorations.splice(alreadySelected, 1);
+                } else {
+                    // Ajouter si moins de 3
+                    if (selectedCards.decorations.length >= 3) {
+                        alert('⚠️ Maximum 3 décorations !');
+                        return;
+                    }
+                    selectedCards.decorations.push(card);
+                }
+            } else {
+                // Pour les autres catégories, toggle
+                if (selectedCards[currentTab]?.id === card.id) {
+                    selectedCards[currentTab] = null;
+                } else {
+                    selectedCards[currentTab] = card;
+                }
+            }
+            
+            displayCardsForCurrentTab();
+            updateCakePreview();
+        }
+
+        function updateCakePreview() {
+            const preview = document.getElementById('cakePreview');
+            const hasCards = selectedCards.base || selectedCards.cream || selectedCards.filling || selectedCards.glaze || selectedCards.decorations.length > 0;
+
+            if (!hasCards) {
+                preview.innerHTML = `
+                    <div class="text-gray-400 text-center">
+                        <i class="fas fa-cake-candles text-6xl mb-2"></i>
+                        <p>Sélectionnez vos ingrédients</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const cards = [
+                selectedCards.base,
+                selectedCards.cream,
+                selectedCards.filling,
+                selectedCards.glaze,
+                ...selectedCards.decorations
+            ].filter(c => c);
+
+            preview.innerHTML = cards.map(cardInst => {
+                const svg = generateCardSVG(cardInst.card, 0.4);
+                return `
+                    <div class="relative">
+                        ${svg}
+                        <p class="text-xs text-center mt-1 font-bold">${cardInst.card.name}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function resetSelection() {
+            selectedCards = { base: null, cream: null, filling: null, glaze: null, decorations: [] };
+            document.getElementById('teamName').value = '';
+            currentTab = 'base';
+            updateCakePreview();
+        }
+
+        // Créer le gâteau
+        document.getElementById('confirmCreateTeam').addEventListener('click', async () => {
+            const name = document.getElementById('teamName').value.trim();
+            
+            if (!name) {
+                alert('⚠️ Donnez un nom à votre gâteau !');
+                return;
+            }
+
+            if (!selectedCards.base || !selectedCards.cream) {
+                alert('⚠️ Base et Crème sont obligatoires !');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/teams/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        base_id: selectedCards.base.id,
+                        cream_id: selectedCards.cream.id,
+                        filling_id: selectedCards.filling?.id || null,
+                        glaze_id: selectedCards.glaze?.id || null,
+                        decoration_ids: selectedCards.decorations.map(d => d.id)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('✅ Gâteau créé avec succès !');
+                    document.getElementById('createTeamModal').classList.add('hidden');
+                    document.getElementById('nav-placeholder').classList.remove('hidden');
+                    resetSelection();
+                    loadTeams();
+                } else {
+                    alert('❌ Erreur: ' + (data.error || JSON.stringify(data)));
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur lors de la création du gâteau');
+            }
+        });
+
+        async function deleteTeam(teamId) {
+            if (!confirm('Supprimer ce gâteau ?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/teams/${teamId}/`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+
+                if (response.ok) {
+                    alert('✅ Gâteau supprimé !');
+                    loadTeams();
+                } else {
+                    alert('❌ Erreur lors de la suppression');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        loadTeams();
+    </script>
+</body>
+</html>

@@ -1,0 +1,420 @@
+{
+  "bases": [
+    {
+      "name": "Génoise",
+      "family": "base",
+      "rarity": "common",
+      "level": 1,
+      "flavor": "vanilla",
+      "stats": { "gout": 70, "technique": 60, "esthetique": 50 }
+    },
+    {
+      "name": "Génoise",
+      "family": "base",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "chocolate",
+      "stats": { "gout": 85, "technique": 70, "esthetique": 80 }
+    },
+        {
+      "name": "Génoise",
+      "family": "base",
+      "rarity": "epic",
+      "level": 1,
+      "flavor": "pistachio",
+      "stats": { "gout": 90, "technique": 70, "esthetique": 86 }
+    },
+    {
+      "name": "Biscuit Entremet",
+      "family": "base",
+      "rarity": "common",
+      "level": 1,
+      "flavor": "vanilla",
+      "stats": { "gout": 75, "technique": 65, "esthetique": 55 }
+    },
+    {
+      "name": "Biscuit Entremet ",
+      "family": "base",
+      "rarity": "common",
+      "level": 1,
+      "flavor": "chocolate",
+      "stats": { "gout": 78, "technique": 65, "esthetique": 60 }
+    },
+    {
+      "name": "Biscuit Entremet",
+      "family": "base",
+      "rarity": "epic",
+      "level": 1,
+      "flavor": "pistachio",
+      "stats": { "gout": 92, "technique": 70, "esthetique": 85 }
+    },
+    {
+      "name": "Dacquoise",
+      "family": "base",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "almond",
+      "stats": { "gout": 82, "technique": 72, "esthetique": 60 }
+    },
+    {
+      "name": "Dacquoise",
+      "family": "base",
+      "rarity": "rare",
+      "level": 1,
+      "flavor": "hazelnut",
+      "stats": { "gout": 88, "technique": 75, "esthetique": 70 }
+    },
+    {
+      "name": "Biscuit Joconde",
+      "family": "base",
+      "rarity": "common",
+      "level": 1,
+      "flavor": "almond",
+      "stats": { "gout": 85, "technique": 80, "esthetique": 70 }
+    },
+    {
+      "name": "Biscuit Joconde",
+      "family": "base",
+      "rarity": "rare",
+      "level": 1,
+      "flavor": "lemon",
+      "stats": { "gout": 83, "technique": 78, "esthetique": 72 }
+    }
+  ],
+  "cremes": [
+    {
+      "name": "Crème au beurre",
+      "family": "cream",
+      "rarity": "common",
+      "level": 1,
+      "flavor": "butter",
+      "stats": { "gout": 80, "technique": 70, "esthetique": 60 }
+    },
+    {
+      "name": "Crème au beurre",
+      "family": "cream",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "chocolate",
+      "stats": { "gout": 85, "technique": 72, "esthetique": 68 }
+    },
+    {
+      "name": "Crème au beurre",
+      "family": "cream",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "coffee",
+      "stats": { "gout": 82, "technique": 71, "esthetique": 64 }
+    },
+    {
+      "name": "Chantilly Mascarpone",
+      "family": "cream",
+      "rarity": "common",
+      "level": 1,
+      "flavor": "vanilla",
+      "stats": { "gout": 88, "technique": 75, "esthetique": 70 }
+    },
+    {
+      "name": "Chantilly Mascarpone",
+      "family": "cream",
+      "rarity": "common",
+      "level": 1,
+      "flavor": "chocolate",
+      "stats": { "gout": 86, "technique": 73, "esthetique": 75 }
+    },
+    {
+      "name": "Chantilly Mascarpone",
+      "family": "cream",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "lemon",
+      "stats": { "gout": 86, "technique": 73, "esthetique": 75 }
+    },
+    {
+      "name": "Chantilly Mascarpone",
+      "family": "cream",
+      "rarity": "rare",
+      "level": 1,
+      "flavor": "fraise",
+      "stats": { "gout": 75, "technique": 71, "esthetique": 80 }
+    },
+    {
+      "name": "Chantilly Mascarpone",
+      "family": "cream",
+      "rarity": "rare",
+      "level": 1,
+      "flavor": "pistachio",
+      "stats": { "gout": 75, "technique": 71, "esthetique": 80 }
+    },
+    {
+      "name": "Crème Anglaise",
+      "family": "cream",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "vanilla",
+      "stats": { "gout": 77, "technique": 62, "esthetique": 58 }
+    },
+    {
+      "name": "Crème Irish Coffee",
+      "family": "cream",
+      "rarity": "epic",
+      "level": 1,
+      "flavor": "coffee",
+      "stats": { "gout": 92, "technique": 80, "esthetique": 78 }
+    }
+  ],
+  "fourrages": [
+    {
+      "name": "Confiture",
+      "family": "filling",
+      "rarity": "common",
+      "level": 1,
+      "flavor": "apple",
+      "stats": { "gout": 70, "technique": 50, "esthetique": 45 }
+    },
+    {
+      "name": "Confiture ",
+      "family": "filling",
+      "rarity": "common",
+      "level": 1,
+      "flavor": "fig",
+      "stats": { "gout": 72, "technique": 50, "esthetique": 48 }
+    },
+    {
+      "name": "Praliné",
+      "family": "filling",
+      "rarity": "rare",
+      "level": 1,
+      "flavor": "nut",
+      "stats": { "gout": 85, "technique": 65, "esthetique": 55 }
+    },
+    {
+      "name": "Praliné",
+      "family": "filling",
+      "rarity": "epic",
+      "level": 1,
+      "flavor": "pistachio",
+      "stats": { "gout": 90, "technique": 70, "esthetique": 65 }
+    },
+    {
+      "name": "Ganache Noir",
+      "family": "filling",
+      "rarity": "rare",
+      "level": 1,
+      "flavor": "chocolate",
+      "stats": { "gout": 90, "technique": 70, "esthetique": 60 }
+    },
+    {
+      "name": "Ganache Lait",
+      "family": "filling",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "chocolate",
+      "stats": { "gout": 85, "technique": 68, "esthetique": 62 }
+    },
+    {
+      "name": "Ganache Blanche",
+      "family": "filling",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "vanilla",
+      "stats": { "gout": 82, "technique": 67, "esthetique": 70 }
+    },
+    {
+      "name": "Curd Citron",
+      "family": "filling",
+      "rarity": "rare",
+      "level": 1,
+      "flavor": "lemon",
+      "stats": { "gout": 88, "technique": 72, "esthetique": 65 }
+    },
+    {
+      "name": "Compote Pomme",
+      "family": "filling",
+      "rarity": "common",
+      "level": 1,
+      "flavor": "apple",
+      "stats": { "gout": 68, "technique": 48, "esthetique": 42 }
+    },
+    {
+      "name": "Coulis",
+      "family": "filling",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "red fruits",
+      "stats": { "gout": 76, "technique": 52, "esthetique": 70 }
+    },
+    {
+      "name": "Caramel Beurre Salé",
+      "family": "filling",
+      "rarity": "epic",
+      "level": 1,
+      "flavor": "caramel",
+      "stats": { "gout": 92, "technique": 75, "esthetique": 68 }
+    },
+    {
+      "name": "Pâte à tartiner",
+      "family": "filling",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "chocolate",
+      "stats": { "gout": 87, "technique": 60, "esthetique": 58 }
+    }
+  ],
+  "glacages": [
+    {
+      "name": "Chocolat Noir",
+      "family": "glaze",
+      "rarity": "rare",
+      "level": 1,
+      "flavor": "chocolate",
+      "stats": { "gout": 85, "technique": 65, "esthetique": 80 }
+    },
+    {
+      "name": "Chocolat Lait",
+      "family": "glaze",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "chocolate",
+      "stats": { "gout": 82, "technique": 63, "esthetique": 78 }
+    },
+    {
+      "name": "Chocolat Blanc",
+      "family": "glaze",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "vanilla",
+      "stats": { "gout": 80, "technique": 62, "esthetique": 80 }
+    },
+    {
+      "name": "Vanille",
+      "family": "glaze",
+      "rarity": "common",
+      "level": 1,
+      "flavor": "vanilla",
+      "stats": { "gout": 70, "technique": 55, "esthetique": 72 }
+    },
+    {
+      "name": "Caramel",
+      "family": "glaze",
+      "rarity": "rare",
+      "level": 1,
+      "flavor": "caramel",
+      "stats": { "gout": 88, "technique": 70, "esthetique": 75 }
+    },
+    {
+      "name": "Myrtille",
+      "family": "glaze",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "blueberry",
+      "stats": { "gout": 76, "technique": 62, "esthetique": 78 }
+    },
+    {
+      "name": "Fraise",
+      "family": "glaze",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "strawberry",
+      "stats": { "gout": 79, "technique": 60, "esthetique": 79 }
+    },
+    {
+      "name": "Pistache",
+      "family": "glaze",
+      "rarity": "epic",
+      "level": 1,
+      "flavor": "pistachio",
+      "stats": { "gout": 90, "technique": 78, "esthetique": 86 }
+    },
+    {
+      "name": "Citron",
+      "family": "glaze",
+      "rarity": "rare",
+      "level": 1,
+      "flavor": "lemon",
+      "stats": { "gout": 84, "technique": 68, "esthetique": 76 }
+    },
+    {
+      "name": "Café",
+      "family": "glaze",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "coffee",
+      "stats": { "gout": 81, "technique": 65, "esthetique": 72 }
+    }
+  ],
+  "decorations": [
+    {
+      "name": "Fruits rouges",
+      "family": "decoration",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "red fruits",
+      "stats": { "gout": 65, "technique": 40, "esthetique": 85 }
+    },
+    {
+      "name": "Framboises",
+      "family": "decoration",
+      "rarity": "rare",
+      "level": 1,
+      "flavor": "cherry",
+      "stats": { "gout": 70, "technique": 42, "esthetique": 88 }
+    },
+    {
+      "name": "Myrtilles",
+      "family": "decoration",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "blueberry",
+      "stats": { "gout": 68, "technique": 41, "esthetique": 86 }
+    },
+    {
+      "name": "Macarons",
+      "family": "decoration",
+      "rarity": "rare",
+      "level": 1,
+      "flavor": "almond",
+      "stats": { "gout": 75, "technique": 60, "esthetique": 90 }
+    },
+    {
+      "name": "Or alimentaire",
+      "family": "decoration",
+      "rarity": "epic",
+      "level": 1,
+      "flavor": "neutral",
+      "stats": { "gout": 50, "technique": 70, "esthetique": 100 }
+    },
+    {
+      "name": "Pistaches concassées",
+      "family": "decoration",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "pistachio",
+      "stats": { "gout": 75, "technique": 48, "esthetique": 82 }
+    },
+    {
+      "name": "Noisettes grillées",
+      "family": "decoration",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "hazelnut",
+      "stats": { "gout": 76, "technique": 49, "esthetique": 81 }
+    },
+    {
+      "name": "Amandes effilées",
+      "family": "decoration",
+      "rarity": "common",
+      "level": 1,
+      "flavor": "almond",
+      "stats": { "gout": 72, "technique": 45, "esthetique": 78 }
+    },
+    {
+      "name": "Pépites chocolat",
+      "family": "decoration",
+      "rarity": "uncommon",
+      "level": 1,
+      "flavor": "chocolate",
+      "stats": { "gout": 73, "technique": 46, "esthetique": 79 }
+    }
+  ]
+}

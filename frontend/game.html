@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Pâtisserie - Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="flex flex-col min-h-screen pt-24 pb-32" style="background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/static/background2.png'); background-size: cover; background-attachment: fixed; background-position: center;">
+    <div id="header-placeholder" class="fixed top-0 left-0 right-0 z-50"></div>
+    <script src="/static/header.js"></script>
+    <script>
+        // Charger le header.html
+        fetch('/static/header.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('header-placeholder').innerHTML = html;
+            });
+    </script>
+
+    <!-- CONTENU PRINCIPAL -->
+    <!--
+        Conteneur principal avec disposition flexible
+        
+        - flex-1: Occupe l'espace disponible restant (flex-grow: 1)
+        - flex: Active le modèle de boîte flexible (display: flex)
+        - p-8: Applique un rembourrage interne de 8 unités (padding)
+        - gap-8: Crée un espacement de 8 unités entre les éléments enfants
+    -->
+    <div class="flex-1 flex flex-row items-center bg-white bg-opacity-80 rounded-2xl shadow-lg p-6 max-w-4xl max-h-1xl m-5">
+        <!-- PROFIL À GAUCHE -->
+        
+            <!-- Photo de profil -->
+            <!-- 
+                <div> : Élément conteneur HTML qui crée une boîte pour grouper du contenu
+                class="flex flex-col items-center mb-6" :
+                    - flex : Active le modèle flexbox pour organiser les éléments enfants
+                    - flex-col : Arrange les éléments enfants en colonne (verticalement, de haut en bas)
+                    - items-center : Centre les éléments enfants horizontalement (sur l'axe transversal)
+                    - mb-6 : Ajoute une marge inférieure (margin-bottom) de 6 unités d'espacement
+            -->
+
+            <div class="flex flex-col items-center mb-6">
+                <div 
+                    id="profile-picture" 
+                    class="w-40 h-40 rounded-full bg-gray-200 flex items-center justify-center border-4 border-pink-300 mb-4"
+                >
+                    <i class="fas fa-user text-gray-400" style="font-size: 80px;"></i>
+                </div>
+                <input type="file" id="file-input" accept="image/*" onchange="uploadProfilePicture()" class="hidden">
+                <button 
+                    onclick="document.getElementById('file-input').click()" 
+                    class="bg-pink-300 text-white px-4 py-2 rounded-lg hover:bg-pink-500 transition font-bold flex items-center gap-2 text-sm"
+                >
+                    <i class="fas fa-camera"></i>
+                    Changer
+                </button>
+                <h2 id="username" class="text-2xl font-bold text-gray-800 mb-4">...</h2>
+                <div class="space-y-2 mb-4 text-sm">
+                    <p class="text-gray-700"><strong>Niveau :</strong> <span id="level" class="text-lg font-bold text-indigo-600">1</span></p>
+                    <p class="text-gray-700"><strong>Exp :</strong> <span id="experience">0</span> XP</p>
+                </div>
+                <!-- Money badge -->
+                <div class="bg-gradient-to-r from-white to-pink-300 text-pink-500 px-4 py-2 rounded-full inline-flex items-center gap-2 font-bold text-sm">
+                    <i class="fas fa-coins"></i>
+                    <span id="money-display">1000</span>
+                </div>
+
+            </div>
+            <div class="flex flex-col items-center mb-6"></div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Bienvenue !</h2>
+            <p class="text-gray-600">Sélectionnez une section via les boutons en bas pour commencer.</p>
+            </div>
+         </div>
+    </div>
+
+    <div id="bottom-nav-placeholder" class="fixed bottom-0 left-0 right-0 z-50"></div>
+    <script src="/static/bottomNav.js"></script>
+
+    <script>
+        function onPageLoad() {
+            // Code spécifique à la page game
+        }
+        
+        function toggleMenu() {
+            alert('Menu à venir !');
+        }
+        
+        function displayProfilePicture(pictureUrl) {
+            const profilePictureDiv = document.getElementById('profile-picture');
+            if (!profilePictureDiv) return;
+            
+            const fullUrl = pictureUrl.startsWith('http') ? pictureUrl : 'http://localhost:8000' + pictureUrl;
+            profilePictureDiv.innerHTML = `<img src="${fullUrl}" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+        }
+        
+        async function uploadProfilePicture() {
+            const token = localStorage.getItem('token');
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                alert('Veuillez sélectionner une image valide');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) {
+                alert('L\'image est trop grande (max 5MB)');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('profile_picture', file);
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/players/upload_picture/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Token ' + token
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.profile_picture) {
+                        displayProfilePicture(data.profile_picture);
+                    }
+                    alert('Photo de profil mise à jour avec succès! 🎉');
+                } else {
+                    alert('Erreur: ' + (data.error || 'Impossible de mettre à jour la photo'));
+                }
+            } catch (error) {
+                console.error('Erreur lors de l\'upload:', error);
+                alert('Erreur lors de l\'upload de la photo');
+            }
+        }
+    </script>
+</body>
+</html>
