@@ -15,7 +15,7 @@ export const BottomNav = () => {
     { path: '/teams', icon: 'mdi:cake', iconType: 'iconify', label: 'Gâteaux' },
     { path: '/matches', icon: 'fas fa-fire', iconType: 'fontawesome', label: 'Matchs' },
     { path: '/packs', icon: 'fas fa-gift', iconType: 'fontawesome', label: 'Packs' },
-    { path: '/marketplace', icon: 'healthicons:market-stall', iconType: 'iconify', label: 'Marketplace' }
+    { path: '/marketplace', icon: 'solar:shop-outline', iconType: 'iconify', label: 'Marketplace' }
   ];
 
   return (

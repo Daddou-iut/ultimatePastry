@@ -214,21 +214,22 @@ export const Inventory = () => {
           <motion.button
             onClick={() => {
               setMergeMode(!mergeMode);
-              setDroppedCards([]);
-            }}
-            className={`px-6 py-2 rounded-lg font-bold text-white transition ${
-              mergeMode 
+                setDroppedCards([]);
+              }}
+              className={`px-6 py-2 rounded-lg font-bold text-white transition flex items-center gap-2 ${
+                mergeMode 
                 ? 'bg-purple-700 hover:bg-purple-800' 
                 : 'bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg'
-            }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            ✨ Mode Fusion
-          </motion.button>
-        </div>
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              >
+              <Icon icon="mdi:creation-outline" />
+              Mode Fusion
+              </motion.button>
+            </div>
 
-        {/* Info mode fusion */}
+            {/* Info mode fusion */}
         {mergeMode && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -278,7 +279,6 @@ export const Inventory = () => {
           className="fixed right-4 top-24 bottom-32 w-80 bg-gradient-to-b from-purple-100 to-pink-100 rounded-2xl shadow-lg p-6 border-4 border-dashed border-purple-400 flex flex-col items-center justify-start overflow-y-auto z-40"
         >
           <div className="text-center mb-6">
-            <p className="text-5xl mb-2">💧</p>
             <p className="text-purple-700 font-bold">Déposez 2 cartes identiques ici</p>
           </div>
 

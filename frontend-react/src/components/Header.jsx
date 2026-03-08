@@ -106,8 +106,8 @@ export const Header = () => {
         </button>
 
         {/* Titre */}
-        <h1 className="text-2xl font-bold text-white">
-          Ultimate Pâtisserie - Game
+        <h1 className="text-5xl font-bold text-white justify-center" style={{ fontFamily: 'Satisfy, cursive', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+          Ultimate Pastry
         </h1>
 
         {/* Actions à droite */}

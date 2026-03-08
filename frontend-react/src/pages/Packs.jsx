@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '../components/Card';
 import backgroundImage from '../assets/background2.png';
+import cardBackround from '../assets/card_background.png';
 import API_URL from '../config';
 
 export const Packs = () => {
@@ -218,12 +219,14 @@ export const Packs = () => {
                   >
                     {/* Face avant */}
                     <div
-                      className="absolute inset-0 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex flex-col items-center justify-center text-white border-2 border-white shadow-2xl"
-                      style={{ backfaceVisibility: 'hidden' }}
+                      className="absolute inset-0 rounded-xl flex flex-col items-center justify-center text-white border-2 border-white shadow-2xl"
+                      style={{ 
+                        backfaceVisibility: 'hidden',
+                        backgroundImage: `url(${cardBackround})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      }}
                     >
-                      <i className="fas fa-gift text-4xl mb-3"></i>
-                      <div className="font-bold text-lg">Carte Mystère</div>
-                      <div className="text-sm opacity-90 mt-2">Clique pour révéler</div>
                     </div>
 
                     {/* Face arrière */}

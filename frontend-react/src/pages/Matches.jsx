@@ -42,7 +42,7 @@ const getDecorationImageFilename = (card) => {
     'noisettes grillées': 'hazelnut.png',
     'amandes effilées': 'amndes_effilées.png',
     'pépites chocolat': 'pépites_chocolat.png',
-    'pistaches concassées': 'hazelnut.png' // fallback
+    'pistaches concassées': 'pistache.png' // fallback
   };
   
   const name = (card.name || '').toLowerCase();

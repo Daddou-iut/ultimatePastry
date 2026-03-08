@@ -241,7 +241,7 @@ export const Marketplace = () => {
     }}>
       <div className="flex-1 flex flex-col bg-white bg-opacity-80 rounded-2xl shadow-lg p-8 max-w-6xl w-full mx-auto my-5">
         <h1 className="text-4xl font-bold text-gray-800 flex items-center mb-8">
-          <i className="fas fa-store text-pink-500 mr-2"></i>Marketplace
+          <Icon icon="solar:shop-outline" className="text-pink-500 mr-2" />Marketplace
         </h1>
 
         {/* Onglets */}

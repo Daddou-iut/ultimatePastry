@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import API_URL from '../config';
 
+import { Icon } from '@iconify/react';
+
 export const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -47,7 +49,7 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 flex items-center justify-center ">
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -56,7 +58,7 @@ export const Login = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-gray-800 mb-2">
-            🎂 Ultimate Pâtisserie
+            <Icon icon="mdi:cake" width="40" height="40" className="text-pink-600 mr-2"/> Ultimate Pastry
           </h1>
           <p className="text-gray-600">Connecte-toi pour jouer</p>
         </div>
@@ -111,7 +113,7 @@ export const Login = () => {
             className={`w-full py-3 rounded-lg font-bold text-white transition ${
               loading
                 ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg'
+                : 'bg-pink-600 hover:shadow-lg'
             }`}
             whileHover={!loading ? { scale: 1.02 } : {}}
             whileTap={!loading ? { scale: 0.98 } : {}}

@@ -52,22 +52,31 @@ export const Card = ({ card, level, compact = false }) => {
   const flavorKey = (card.flavor || 'neutral').toLowerCase();
   const flavorBadge = flavorBadgeIcons[flavorKey] || flavorBadgeIcons.neutral;
 
-  const rarityColors = {
-    'common': 'border-gray-400',
-    'uncommon': 'border-yellow-600',
-    'rare': 'border-silver-400',
-    'epic': 'border-yellow-400'
+  // Couleurs de bordure selon rareté
+  const rarityStyles = {
+    'common': {
+      border: '#000000',
+      bg: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+      shadow: 'rgba(156, 163, 175, 0.4)'
+    },
+    'uncommon': {
+      border: '#C0C0C0',
+      bg: 'linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%)',
+      shadow: 'rgba(192, 192, 192, 0.5)'
+    },
+    'rare': {
+      border: '#CD7F32',
+      bg: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+      shadow: 'rgba(205, 127, 50, 0.4)'
+    },
+    'epic': {
+      border: '#FFD700',
+      bg: 'linear-gradient(135deg, #fef3c7 0%, #fbbf24 50%, #f59e0b 100%)',
+      shadow: 'rgba(255, 215, 0, 0.6)'
+    }
   };
   
-  const rarityBg = {
-    'common': 'bg-gray-100',
-    'uncommon': 'bg-yellow-50',
-    'rare': 'bg-gray-50',
-    'epic': 'bg-gradient-to-br from-yellow-100 to-orange-100'
-  };
-  
-  const borderClass = rarityColors[card.rarity] || 'border-gray-400';
-  const bgClass = rarityBg[card.rarity] || 'bg-transparent';
+  const currentRarity = rarityStyles[card.rarity] || rarityStyles.common;
 
   const wrapperSize = compact ? 'w-40 h-56 p-2' : 'w-60 h-80 p-3';
   const visualHeight = compact ? 'h-36' : 'h-64';
@@ -76,7 +85,14 @@ export const Card = ({ card, level, compact = false }) => {
 
   return (
     <motion.div
-      className={`${bgClass} ${borderClass} border-4 rounded-xl shadow-lg ${wrapperSize} flex flex-col items-center justify-between cursor-pointer`}
+      className={`rounded-xl shadow-lg ${wrapperSize} flex flex-col items-center justify-between cursor-pointer`}
+      style={{
+        background: currentRarity.bg,
+        borderWidth: '4px',
+        borderStyle: 'solid',
+        borderColor: currentRarity.border,
+        boxShadow: `0 4px 6px ${currentRarity.shadow}`
+      }}
       
       // Animation au chargement
       initial={{ opacity: 0, y: 50, rotateY: -45 }}
@@ -91,7 +107,7 @@ export const Card = ({ card, level, compact = false }) => {
       whileHover={{ 
         y: compact ? -8 : -20,
         scale: compact ? 1.02 : 1.05,
-        boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
+        boxShadow: `0 25px 50px ${currentRarity.shadow}`,
         transition: { duration: 0.3 }
       }}
       
