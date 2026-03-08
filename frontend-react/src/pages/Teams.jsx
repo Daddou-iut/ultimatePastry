@@ -5,6 +5,7 @@ import { Card } from '../components/Card';
 import backgroundImage from '../assets/background2.png';
 import { Icon } from '@iconify/react';
 import API_URL from '../config';
+import Toast from '../components/Toast';
 
 export const Teams = () => {
   const [teams, setTeams] = useState([]);
@@ -21,6 +22,7 @@ export const Teams = () => {
     decorations: []
   });
   const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -93,7 +95,10 @@ export const Teams = () => {
         });
       } else {
         if (selectedCards.decorations.length >= 3) {
-          alert('⚠️ Maximum 3 décorations !');
+          setNotification({
+            message: 'Maximum 3 décorations',
+            type: 'warning'
+          });
           return;
         }
         setSelectedCards({
@@ -118,12 +123,18 @@ export const Teams = () => {
 
   const createTeam = async () => {
     if (!teamName.trim()) {
-      alert('⚠️ Donnez un nom à votre gâteau !');
+      setNotification({
+        message: 'Donnez un nom à votre gâteau',
+        type: 'warning'
+      });
       return;
     }
 
     if (!selectedCards.base || !selectedCards.filling) {
-      alert('⚠️ Base et Fourrage sont obligatoires !');
+      setNotification({
+        message: 'Base et Fourrage sont obligatoires',
+        type: 'warning'
+      });
       return;
     }
 
@@ -145,16 +156,25 @@ export const Teams = () => {
       });
 
       if (response.ok) {
-        alert('✅ Gâteau créé avec succès !');
+        setNotification({
+          message: 'Gâteau créé avec succès',
+          type: 'success'
+        });
         closeModal();
         loadTeams();
       } else {
         const data = await response.json();
-        alert('❌ Erreur: ' + (data.error || JSON.stringify(data)));
+        setNotification({
+          message: data.error || 'Erreur lors de la création',
+          type: 'error'
+        });
       }
     } catch (error) {
       console.error('Erreur:', error);
-      alert('❌ Erreur lors de la création du gâteau');
+      setNotification({
+        message: 'Erreur lors de la création du gâteau',
+        type: 'error'
+      });
     }
   };
 
@@ -170,10 +190,17 @@ export const Teams = () => {
       if (response.ok) {
         loadTeams();
       } else {
-        alert('❌ Erreur lors de la suppression');
+        setNotification({
+          message: 'Erreur lors de la suppression',
+          type: 'error'
+        });
       }
     } catch (error) {
       console.error('Erreur:', error);
+      setNotification({
+        message: 'Erreur lors de la suppression du gâteau',
+        type: 'error'
+      });
     }
   };
 
@@ -200,14 +227,20 @@ export const Teams = () => {
   const validateStep1 = (showAlert = true) => {
     if (!teamName.trim()) {
       if (showAlert) {
-        alert('⚠️ Donnez un nom à votre gâteau !');
+        setNotification({
+          message: 'Donnez un nom à votre gâteau',
+          type: 'warning'
+        });
       }
       return false;
     }
 
     if (!selectedCards.base) {
       if (showAlert) {
-        alert('⚠️ Base est obligatoire !');
+        setNotification({
+          message: 'Base est obligatoire',
+          type: 'warning'
+        });
       }
       return false;
     }
@@ -218,7 +251,10 @@ export const Teams = () => {
   const validateStep2 = (showAlert = true) => {
     if (!selectedCards.filling) {
       if (showAlert) {
-        alert('⚠️ Fourrage est obligatoire !');
+        setNotification({
+          message: 'Fourrage est obligatoire',
+          type: 'warning'
+        });
       }
       return false;
     }
@@ -301,11 +337,19 @@ export const Teams = () => {
     : allCards.filter(c => c.card.family === currentTab);
 
   return (
-    <div className="min-h-[calc(100dvh-1rem)] pt-24 pb-32" style={{
-      backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
-      backgroundSize: 'cover',
-      backgroundAttachment: 'fixed',
-      backgroundPosition: 'center'
+    <>
+      {notification && (
+        <Toast
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      <div className="min-h-[calc(100dvh-1rem)] pt-24 pb-32" style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundAttachment: 'fixed',
+        backgroundPosition: 'center'
     }}>
       <div className="flex-1 flex gap-6 mx-4">
         <div className="flex-1 bg-white bg-opacity-80 rounded-2xl shadow-lg p-8">
@@ -576,6 +620,7 @@ export const Teams = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 };

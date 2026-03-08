@@ -5,9 +5,11 @@ import { Card } from '../components/Card';
 import backgroundImage from '../assets/background2.png';
 import { Icon } from '@iconify/react';
 import API_URL from '../config';
+import Toast from '../components/Toast';
 
 export const Marketplace = () => {
   const [currentTab, setCurrentTab] = useState('browse');
+  const [notification, setNotification] = useState(null);
   const [allListings, setAllListings] = useState([]);
   const [myListings, setMyListings] = useState([]);
   const [inventoryCards, setInventoryCards] = useState([]);
@@ -233,12 +235,20 @@ export const Marketplace = () => {
   );
 
   return (
-    <div className="min-h-[calc(100dvh-14rem)] pt-24 pb-32" style={{
-      backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
-      backgroundSize: 'cover',
-      backgroundAttachment: 'fixed',
-      backgroundPosition: 'center'
-    }}>
+    <>
+      {notification && (
+        <Toast
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      <div className="min-h-[calc(100dvh-14rem)] pt-24 pb-32" style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundAttachment: 'fixed',
+        backgroundPosition: 'center'
+      }}>
       <div className="flex-1 flex flex-col bg-white bg-opacity-80 rounded-2xl shadow-lg p-8 max-w-6xl w-full mx-auto my-5">
         <h1 className="text-4xl font-bold text-gray-800 flex items-center mb-8">
           <Icon icon="solar:shop-outline" className="text-pink-500 mr-2" />Marketplace
@@ -516,6 +526,7 @@ export const Marketplace = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 };

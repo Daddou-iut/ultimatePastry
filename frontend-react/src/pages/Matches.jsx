@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import backgroundImage from '../assets/background2.png';
 import { generateCardSVG } from '../cardGenerator';
 import API_URL from '../config';
+import Toast from '../components/Toast';
 
 const getBaseImageFilename = (card) => {
   if (!card) return null;
@@ -404,6 +405,7 @@ export const Matches = () => {
   const [matchResult, setMatchResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [myTeamIds, setMyTeamIds] = useState([]);
+  const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -452,7 +454,10 @@ export const Matches = () => {
       const myTeamsData = await myTeamsResponse.json();
 
       if (myTeamsData.length === 0) {
-        alert('⚠️ Vous devez créer au moins un gâteau !');
+        setNotification({
+          message: 'Vous devez créer au moins un gâteau',
+          type: 'warning'
+        });
         return;
       }
 
@@ -490,12 +495,18 @@ export const Matches = () => {
 
   const launchMatch = async () => {
     if (!team1Id || !team2Id) {
-      alert('⚠️ Sélectionnez les deux gâteaux !');
+      setNotification({
+        message: 'Sélectionnez les deux gâteaux',
+        type: 'warning'
+      });
       return;
     }
 
     if (team1Id === team2Id) {
-      alert('⚠️ Vous ne pouvez pas affronter le même gâteau !');
+      setNotification({
+        message: 'Vous ne pouvez pas affronter le même gâteau',
+        type: 'warning'
+      });
       return;
     }
 
@@ -527,12 +538,18 @@ export const Matches = () => {
         loadMatches();
       } else {
         setShowModal(true);
-        alert('❌ Erreur: ' + (data.error || JSON.stringify(data)));
+        setNotification({
+          message: data.error || 'Erreur lors du match',
+          type: 'error'
+        });
       }
     } catch (error) {
       console.error('Erreur:', error);
       setShowModal(true);
-      alert('❌ Erreur lors du match');
+      setNotification({
+        message: 'Erreur lors du match',
+        type: 'error'
+      });
     } finally {
       setShowBattle(false);
     }
@@ -552,26 +569,34 @@ export const Matches = () => {
   const constructionFinishedDelay = 7.8;
 
   return (
-    <div className="min-h-[calc(100dvh-14rem)] pt-24 pb-32" style={{
-      backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
-      backgroundSize: 'cover',
-      backgroundAttachment: 'fixed',
-      backgroundPosition: 'center',
-      minHeight: '100vh'
-    }}>
-      <div className="flex-1 flex gap-6 mx-4">
-        <div className="flex-1 bg-white bg-opacity-80 rounded-2xl shadow-lg p-8">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-800 flex items-center">
-              <i className="fas fa-swords text-pink-500 mr-2"></i>Matchs
-            </h1>
-            <button
-              onClick={openCreateModal}
-              className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2 rounded-lg font-bold hover:shadow-lg transition"
-            >
-              <i className="fas fa-play mr-2"></i>Nouveau Match
-            </button>
-          </div>
+    <>
+      {notification && (
+        <Toast
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      <div className="min-h-[calc(100dvh-14rem)] pt-24 pb-32" style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundAttachment: 'fixed',
+        backgroundPosition: 'center',
+        minHeight: '100vh'
+      }}>
+        <div className="flex-1 flex gap-6 mx-4">
+          <div className="flex-1 bg-white bg-opacity-80 rounded-2xl shadow-lg p-8">
+            <div className="flex justify-between items-center mb-8">
+              <h1 className="text-4xl font-bold text-gray-800 flex items-center">
+                <i className="fas fa-swords text-pink-500 mr-2"></i>Matchs
+              </h1>
+              <button
+                onClick={openCreateModal}
+                className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2 rounded-lg font-bold hover:shadow-lg transition"
+              >
+                <i className="fas fa-play mr-2"></i>Nouveau Match
+              </button>
+            </div>
 
           {loading ? (
             <div className="text-center py-12 text-gray-600">
@@ -898,6 +923,7 @@ export const Matches = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 };

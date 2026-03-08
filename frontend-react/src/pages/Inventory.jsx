@@ -4,6 +4,7 @@ import { Icon } from '@iconify/react';
 import { Card } from '../components/Card';
 import backgroundImage from '../assets/background2.png';
 import API_URL from '../config';
+import Toast from '../components/Toast';
 
 export const Inventory = () => {
   // ===== ÉTATS =====
@@ -15,6 +16,7 @@ export const Inventory = () => {
   const [draggedCard, setDraggedCard] = useState(null); // Carte en cours de drag
   const [filterOpen, setFilterOpen] = useState(false); // Panneau filtre ouvert?
   const [selectedFamily, setSelectedFamily] = useState('all'); // Famille sélectionnée
+  const [notification, setNotification] = useState(null);
 
   const token = localStorage.getItem('token');
 
@@ -43,11 +45,17 @@ export const Inventory = () => {
         const data = await response.json();
         setCards(data);
       } else {
-        alert('Erreur: impossible de charger l\'inventaire');
+        setNotification({
+          message: 'Impossible de charger l\'inventaire',
+          type: 'error'
+        });
       }
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur de connexion');
+      setNotification({
+        message: 'Erreur de connexion au serveur',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -75,7 +83,10 @@ export const Inventory = () => {
     // Vérifier si déjà dans la zone
     const alreadyAdded = droppedCards.some(c => c.id === draggedCard.id);
     if (alreadyAdded) {
-      alert('⚠️ Cette carte est déjà dans la zone !');
+      setNotification({
+        message: 'Cette carte est déjà dans la zone',
+        type: 'warning'
+      });
       return;
     }
 
@@ -86,7 +97,10 @@ export const Inventory = () => {
     // Si 2 cartes, vérifier et afficher modal
     if (newDroppedCards.length === 2) {
       if (newDroppedCards[0].card.id !== newDroppedCards[1].card.id) {
-        alert('⚠️ Les deux cartes doivent être identiques !');
+        setNotification({
+          message: 'Les deux cartes doivent être identiques',
+          type: 'warning'
+        });
         setDroppedCards([]);
         return;
       }
@@ -101,7 +115,10 @@ export const Inventory = () => {
   // ===== FUSIONNER LES CARTES =====
   const mergeTwoCards = async () => {
     if (droppedCards.length !== 2) {
-      alert('⚠️ Veuillez déposer exactement deux cartes');
+      setNotification({
+        message: 'Veuillez déposer exactement deux cartes',
+        type: 'warning'
+      });
       return;
     }
 
@@ -123,19 +140,28 @@ export const Inventory = () => {
         setDroppedCards([]);
 
         // Message de succès
-        alert('✅ Fusion réussie !');
+        setNotification({
+          message: 'Fusion réussie',
+          type: 'success'
+        });
 
         // Réinitialiser et recharger
         setMergeMode(false);
         await loadInventory();
       } else {
         const data = await response.json();
-        alert('❌ Erreur: ' + data.error);
+        setNotification({
+          message: data.error || 'Erreur lors de la fusion',
+          type: 'error'
+        });
         setDroppedCards([]);
       }
     } catch (error) {
       console.error('Erreur:', error);
-      alert('❌ Erreur lors de la fusion');
+      setNotification({
+        message: 'Erreur lors de la fusion',
+        type: 'error'
+      });
     }
   };
 
@@ -155,14 +181,31 @@ export const Inventory = () => {
   // ===== RENDU =====
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-2xl text-gray-600">Chargement...</p>
-      </div>
+      <>
+        {notification && (
+          <Toast
+            message={notification.message}
+            type={notification.type}
+            onClose={() => setNotification(null)}
+          />
+        )}
+        <div className="flex items-center justify-center min-h-screen">
+          <p className="text-2xl text-gray-600">Chargement...</p>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="flex gap-6 p-8 pt-24 pb-32" style={{
+    <>
+      {notification && (
+        <Toast
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      <div className="flex gap-6 p-8 pt-24 pb-32" style={{
       backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
       backgroundSize: 'cover',
       backgroundAttachment: 'fixed',
@@ -359,6 +402,7 @@ export const Inventory = () => {
           </motion.div>
         </motion.div>
       )}
-    </div>
+      </div>
+    </>
   );
 };

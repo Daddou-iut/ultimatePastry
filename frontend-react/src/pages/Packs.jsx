@@ -5,6 +5,7 @@ import { Card } from '../components/Card';
 import backgroundImage from '../assets/background2.png';
 import cardBackround from '../assets/card_background.png';
 import API_URL from '../config';
+import Toast from '../components/Toast';
 
 export const Packs = () => {
   const [packs, setPacks] = useState([]);
@@ -13,6 +14,7 @@ export const Packs = () => {
   const [revealedCards, setRevealedCards] = useState([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [cardFlipped, setCardFlipped] = useState(false);
+  const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -63,11 +65,17 @@ export const Packs = () => {
         setCardFlipped(false);
         setShowModal(true);
       } else {
-        alert('Erreur: ' + (data.error || 'Impossible d\'ouvrir le pack'));
+        setNotification({
+          message: data.error || 'Impossible d\'ouvrir le pack',
+          type: 'error'
+        });
       }
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur serveur');
+      setNotification({
+        message: 'Erreur serveur',
+        type: 'error'
+      });
     }
   };
 
@@ -99,12 +107,22 @@ export const Packs = () => {
     'gold': 'fa-gift'
   };
 
+
+
   const currentCard = revealedCards[currentCardIndex];
 
   return (
-    <div className="min-h-[calc(100dvh-14rem)] pt-24 pb-32 flex items-center justify-center" style={{
-      backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
-      backgroundSize: 'cover',
+    <>
+      {notification && (
+        <Toast
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      <div className="min-h-[calc(100dvh-14rem)] pt-24 pb-32 flex items-center justify-center" style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
+        backgroundSize: 'cover',
       backgroundAttachment: 'fixed',
       backgroundPosition: 'center'
     }}>
@@ -272,6 +290,7 @@ export const Packs = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 };
