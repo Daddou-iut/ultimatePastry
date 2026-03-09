@@ -96,15 +96,7 @@ export const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 w-full z-50 bg-gradient-to-b from-pink-200 to-pink-400 shadow-lg text-white">
       <div className="flex justify-between items-center px-6 py-4">
-        {/* Bouton Menu */}
-        <button 
-          className="text-2xl hover:bg-rose-400 p-2 rounded transition"
-          onClick={toggleMenu}
-          title="Menu"
-        >
-          <i className="fas fa-bars"></i>
-        </button>
-
+       
         {/* Titre */}
         <h1 className="text-5xl font-bold text-white justify-center" style={{ fontFamily: 'Satisfy, cursive', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
           Ultimate Pastry
@@ -153,12 +145,6 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Menu déroulant (optionnel pour plus tard) */}
-      {menuOpen && (
-        <div className="bg-pink-300 px-6 py-4 border-t border-pink-400">
-          <p className="text-white">Menu à venir !</p>
-        </div>
-      )}
     </header>
   );
 };

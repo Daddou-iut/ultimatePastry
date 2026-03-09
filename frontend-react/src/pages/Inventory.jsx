@@ -27,8 +27,8 @@ export const Inventory = () => {
       return;
     }
   
-    loadInventory();  // Sinon, charge l'inventaire
-  }, []);  // [] = exécute qu'UNE FOIS au démarrage
+    loadInventory();
+  }, []); 
 
   const loadInventory = async () => {
     try {
