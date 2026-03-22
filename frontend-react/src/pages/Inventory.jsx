@@ -17,6 +17,7 @@ export const Inventory = () => {
   const [filterOpen, setFilterOpen] = useState(false); // Panneau filtre ouvert?
   const [selectedFamily, setSelectedFamily] = useState('all'); // Famille sélectionnée
   const [notification, setNotification] = useState(null);
+  const MAX_DISPLAY = 40;
 
   const token = localStorage.getItem('token');
 
@@ -174,10 +175,11 @@ export const Inventory = () => {
     { id: 'decoration', label: 'Décorations', icon: 'fa-star' }
   ];
 
-  const filteredCards = selectedFamily === 'all'
+  const filteredCards = (selectedFamily === 'all'
     ? cards
-    : cards.filter((cardInstance) => cardInstance.card.family === selectedFamily);
-
+    : cards.filter((cardInstance) => cardInstance.card.family === selectedFamily)
+  ).slice(0, MAX_DISPLAY);
+  
   // ===== RENDU =====
   if (loading) {
     return (
@@ -296,17 +298,16 @@ export const Inventory = () => {
             </div>
           ) : (
             filteredCards.map((cardInstance) => (
-              <motion.div
-                key={cardInstance.id}
-                draggable={mergeMode}
-                onDragStart={() => handleDragStart(cardInstance)}
-                onDragEnd={handleDragEnd}
-                className={`relative ${mergeMode ? 'cursor-move hover:opacity-75' : 'cursor-default'}`}
-                whileDrag={mergeMode ? { scale: 0.95, opacity: 0.5 } : {}}
-              >
-                <Card card={cardInstance.card} level={cardInstance.level} />
-              </motion.div>
-            ))
+            <div
+              key={cardInstance.id}
+              draggable={mergeMode}
+              onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; handleDragStart(cardInstance); }}
+              onDragEnd={handleDragEnd}
+              className={`relative ${mergeMode ? 'cursor-move' : 'cursor-default'}`}
+            >
+              <Card card={cardInstance.card} level={cardInstance.level} />
+            </div>
+          ))
           )}
         </div>
       </div>
