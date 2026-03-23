@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+
+  # ── Kafka Exporter ─────────────────────────────────────────
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    container_name: kafka-exporter
+    command:
+      - "--kafka.server=172.31.54.212:9092"
+    ports:
+      - "9308:9308"
+    restart: unless-stopped
+
+  # ── PostgreSQL Exporter ────────────────────────────────────
+  postgres-exporter:
+    postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    env_file:
+      - ../.env
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${NEON_USER}:${NEON_PASSWORD}@${NEON_HOST}/${NEON_DB}?sslmode=require"
+    ports:
+      - "9187:9187"
+    restart: unless-stopped
+
+  # ── Prometheus ─────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  # ── Grafana ────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=pastry2026
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+
+volumes:
+  grafana-data:
