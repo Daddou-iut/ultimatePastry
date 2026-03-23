@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'adrf',
     'rest_framework',
     'rest_framework.authtoken',
     'cards',
@@ -72,16 +73,20 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'game.wsgi.application'
+ASGI_APPLICATION = 'game.asgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+import os
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME':     os.getenv('NEON_DB'),
+        'USER':     os.getenv('NEON_USER'),
+        'PASSWORD': os.getenv('NEON_PASSWORD'),
+        'HOST':     os.getenv('NEON_HOST'),
+        'PORT':     '5432',
+        'OPTIONS':  { 'sslmode': 'require' },
     }
 }
 

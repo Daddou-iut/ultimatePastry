@@ -18,14 +18,11 @@ router.register(r'packs', PackViewSet, basename='pack')
 
 urlpatterns = [
     path('', include(router.urls)),
-
     path('register/', register, name='register'),
     path('login/', login, name='login'),
     path('inventory/', get_inventory, name='inventory'),
     path('adversary-teams/', get_adversary_teams, name='adversary-teams'),
     path('merge-cards/', merge_cards, name='merge-cards'),
-    
-    # Marketplace endpoints
     path('marketplace/', list_marketplace_listings, name='list-marketplace'),
     path('marketplace/my-listings/', list_own_marketplace_listings, name='my-marketplace-listings'),
     path('marketplace/create/', create_marketplace_listing, name='create-marketplace-listing'),

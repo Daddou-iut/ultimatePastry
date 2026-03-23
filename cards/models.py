@@ -1,6 +1,4 @@
 from django.db import models
-
-# Create your models here.
 from django.db import models
 from django.forms import ValidationError
 from django.contrib.auth.models import User
@@ -15,7 +13,6 @@ class Card(models.Model):
     ]
     
     RARITY_CHOICES = [
-        # val stockée dans la bdd, valeur affichée dans l'interface d'administration
         ('common', 'Commun'),
         ('uncommon', 'Peu commun'),
         ('rare', 'Rare'),
@@ -49,9 +46,26 @@ class CardInstance(models.Model):
     owner = models.ForeignKey(Player, on_delete=models.CASCADE)
     level = models.IntegerField(default=1)
 
+    # Stats boostées par la fusion — None = pas encore fusionné, on utilise les stats de base
+    gout_bonus       = models.IntegerField(null=True, blank=True)
+    technique_bonus  = models.IntegerField(null=True, blank=True)
+    esthetique_bonus = models.IntegerField(null=True, blank=True)
+
+    @property
+    def gout(self):
+        return self.gout_bonus if self.gout_bonus is not None else self.card.gout
+
+    @property
+    def technique(self):
+        return self.technique_bonus if self.technique_bonus is not None else self.card.technique
+
+    @property
+    def esthetique(self):
+        return self.esthetique_bonus if self.esthetique_bonus is not None else self.card.esthetique
+
     def __str__(self):
         return f"{self.card.name} (lvl {self.level}) owned by {self.owner.user.username}"
-    
+       
 class Team(models.Model):
     name = models.CharField(max_length=100)
     owner = models.ForeignKey(Player, on_delete=models.CASCADE)
@@ -103,13 +117,12 @@ class Tournament(models.Model):
     description = models.TextField(blank=True)
     bonus_type = models.CharField(max_length=20, choices=BONUS_CHOICES, default='classique')
     
-    # Multiplicateurs
+    
     gout_multiplier = models.FloatField(default=1.0)
     technique_multiplier = models.FloatField(default=1.0)
     esthetique_multiplier = models.FloatField(default=1.0)
     
-    # Bonus additionnels
-    bonus_percentage = models.FloatField(default=0.0)  # exemple : 10 pour 10%
+    bonus_percentage = models.FloatField(default=0.0)
     
     def __str__(self):
         return self.name
@@ -140,9 +153,9 @@ class Pack(models.Model):
     ]
     
     level = models.CharField(max_length=10, choices=LEVEL_CHOICES)
-    cost = models.IntegerField()  # prix en argent du jeu
-    rarity_boost = models.CharField(max_length=20)  # exemple : "rare", "uncommon"
-    cards_count = models.IntegerField(default=5)  # nombre de cartes dans le pack
+    cost = models.IntegerField()  
+    rarity_boost = models.CharField(max_length=20) 
+    cards_count = models.IntegerField(default=5) 
     
     def __str__(self):
         return f"{self.level.capitalize()} Pack - {self.cost} coins"

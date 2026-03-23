@@ -36,6 +36,6 @@ class Command(BaseCommand):
                 }
             )
             if created:
-                self.stdout.write(f"✅ Pack {pack.level.upper()} créé")
+                self.stdout.write(f"OK Pack {pack.level.upper()} créé")
             else:
-                self.stdout.write(f"⚠️ Pack {pack.level.upper()} existe déjà")
+                self.stdout.write(f"OK Pack {pack.level.upper()} existe déjà")

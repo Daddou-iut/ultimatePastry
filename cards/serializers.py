@@ -21,16 +21,24 @@ class CardSerializer(serializers.ModelSerializer):
 
 class CardInstanceSerializer(serializers.ModelSerializer):
     card = CardSerializer(read_only=True)
-    
+    gout        = serializers.SerializerMethodField()
+    technique   = serializers.SerializerMethodField()
+    esthetique  = serializers.SerializerMethodField()
+
     class Meta:
         model = CardInstance
-        fields = ['id', 'card', 'owner', 'level']
+        fields = ['id', 'card', 'owner', 'level', 'gout', 'technique', 'esthetique']
+
+    def get_gout(self, obj):
+        return obj.gout
+
+    def get_technique(self, obj):
+        return obj.technique
+
+    def get_esthetique(self, obj):
+        return obj.esthetique
 
 class TeamSerializer(serializers.ModelSerializer):
-    """
-    Serializer pour un gâteau (Team).
-    Affiche tous les détails : les cartes, le propriétaire, le score.
-    """
     base = CardInstanceSerializer(read_only=True)
     cream = CardInstanceSerializer(read_only=True)
     filling = CardInstanceSerializer(read_only=True)
@@ -44,7 +52,6 @@ class TeamSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'owner', 'base', 'cream', 'filling', 'glaze', 'decorations', 'score']
     
     def get_score(self, obj):
-        """Calcule le score du gâteau en utilisant notre fonction utils"""
         from cards.utils import calculer_score_final
         try:
             return calculer_score_final(obj)
@@ -52,10 +59,6 @@ class TeamSerializer(serializers.ModelSerializer):
             return 0
 
 class TeamCreateSerializer(serializers.ModelSerializer):
-    """
-    Serializer pour CRÉER un gâteau.
-    On accepte les IDs des cartes, pas les objets complets.
-    """
     base_id = serializers.IntegerField(write_only=True)
     filling_id = serializers.IntegerField(write_only=True)
     cream_id = serializers.IntegerField(required=False, allow_null=True, write_only=True)
@@ -71,10 +74,6 @@ class TeamCreateSerializer(serializers.ModelSerializer):
         fields = ['name', 'base_id', 'filling_id', 'cream_id', 'glaze_id', 'decoration_ids']
 
 class MatchSerializer(serializers.ModelSerializer):
-    """
-    Serializer pour un match.
-    Affiche les détails des deux gâteaux et le gagnant.
-    """
     teamP1 = TeamSerializer(read_only=True)
     teamP2 = TeamSerializer(read_only=True)
     winner = TeamSerializer(read_only=True)
@@ -84,10 +83,7 @@ class MatchSerializer(serializers.ModelSerializer):
         fields = ['id', 'teamP1', 'teamP2', 'score_player1', 'score_player2', 'winner', 'date']
 
 class MatchCreateSerializer(serializers.ModelSerializer):
-    """
-    Serializer pour CRÉER un match.
-    On accepte les IDs des gâteaux.
-    """
+
     team1_id = serializers.IntegerField(write_only=True)
     team2_id = serializers.IntegerField(write_only=True)
     
@@ -97,29 +93,18 @@ class MatchCreateSerializer(serializers.ModelSerializer):
 
 
 class PackSerializer(serializers.ModelSerializer):
-    """
-    Serializer pour un Pack.
-    Affiche les détails du pack : niveau, prix, nombre de cartes, rareté.
-    """
     class Meta:
         model = Pack
         fields = ['id', 'level', 'cost', 'rarity_boost', 'cards_count']
 
 
 class PackOpenSerializer(serializers.Serializer):
-    """
-    Serializer pour ouvrir un pack.
-    Retourne les cartes obtenues.
-    """
+
     cards = CardInstanceSerializer(many=True, read_only=True)
     message = serializers.CharField(read_only=True)
 
 
 class MarketplaceListingSerializer(serializers.ModelSerializer):
-    """
-    Serializer pour une annonce de marketplace.
-    Affiche la carte, le vendeur, le prix et le statut.
-    """
     card_instance = CardInstanceSerializer(read_only=True)
     seller = PlayerSerializer(read_only=True)
     buyer = PlayerSerializer(read_only=True, allow_null=True)
@@ -130,10 +115,7 @@ class MarketplaceListingSerializer(serializers.ModelSerializer):
 
 
 class MarketplaceListingCreateSerializer(serializers.ModelSerializer):
-    """
-    Serializer pour CRÉER une annonce.
-    On accepte l'ID de la carte et le prix.
-    """
+
     card_instance_id = serializers.IntegerField(write_only=True)
     
     class Meta:

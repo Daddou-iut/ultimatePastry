@@ -1,5 +1,4 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, permission_classes, authentication_classes
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -15,36 +14,35 @@ from cards.serializers import (
     PackSerializer, PackOpenSerializer,
     MarketplaceListingSerializer, MarketplaceListingCreateSerializer
 )
+from adrf.decorators import api_view    
+from rest_framework.decorators import action, permission_classes, authentication_classes
+from adrf import viewsets
 from cards.utils import calculer_score_final, afficher_details_score
 import random
+from asgiref.sync import sync_to_async
 
 MAX_INVENTORY_CARDS = 40
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def register(request):
+async def register(request):
     username = request.data.get('username')
     password = request.data.get('password')
     email = request.data.get('email')
     first_name = request.data.get('first_name')
     last_name = request.data.get('last_name')
     
-    # Vérifie que les champs ne sont pas vides
     if not username or not password or not email or not first_name or not last_name:
         return Response({'error': 'Missing fields'}, status=status.HTTP_400_BAD_REQUEST)
     
-    # Vérifie que l'utilisateur n'existe pas déjà
-    if User.objects.filter(username=username).exists():
+    if await User.objects.filter(username=username).aexists():
         return Response({'error': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
     
-    # Crée l'User
-    user = User.objects.create_user(username=username, password=password, email=email, first_name=first_name, last_name=last_name)
+    user = await sync_to_async(User.objects.create_user)(username=username, password=password, email=email, first_name=first_name, last_name=last_name)
     
-    # Crée le Player associé
-    player = Player.objects.create(user=user)
+    player = await Player.objects.acreate(user=user)
     
-    # Crée le Token
-    token = Token.objects.create(user=user)
+    token = await Token.objects.acreate(user=user)
     
     return Response({
         'user': UserSerializer(user).data,
@@ -53,20 +51,17 @@ def register(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def login(request):
+async def login(request):
     username = request.data.get('username')
     password = request.data.get('password')
     
-    # Vérifie que les champs ne sont pas vides
     if not username or not password:
         return Response({'error': 'Missing fields'}, status=status.HTTP_400_BAD_REQUEST)
     
-    # Authentifie l'utilisateur
-    user = authenticate(username=username, password=password)
+    user = await sync_to_async(authenticate)(username=username, password=password)
     
     if user is not None:
-        # Crée le token s'il n'existe pas, sinon le récupère
-        token, created = Token.objects.get_or_create(user=user)
+        token, created = await Token.objects.aget_or_create(user=user)
         return Response({
             'user': UserSerializer(user).data,
             'token': token.key
@@ -78,10 +73,10 @@ def login(request):
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def get_inventory(request):
+async def get_inventory(request):
     if request.user.is_authenticated:
-        player = request.user.player
-        card_instances = CardInstance.objects.filter(owner=player)
+        player = await sync_to_async(lambda: request.user.player)()
+        card_instances = [ci async for ci in CardInstance.objects.filter(owner=player).select_related('card')]
         serializer = CardInstanceSerializer(card_instances, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
@@ -90,70 +85,54 @@ def get_inventory(request):
 #teams
 
 class TeamViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet pour gérer les gâteaux (Teams).
-    
-    Endpoints disponibles:
-    - GET /api/teams/ → Liste mes gâteaux
-    - POST /api/teams/ → Créer un nouveau gâteau
-    - GET /api/teams/{id}/ → Détails d'un gâteau
-    - PUT /api/teams/{id}/ → Modifier un gâteau
-    - DELETE /api/teams/{id}/ → Supprimer un gâteau
-    """
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        # Retourne seulement les gâteaux du joueur connecté
-        return Team.objects.filter(owner=self.request.user.player)
-    
+        return Team.objects.none()
+
     def get_serializer_class(self):
-        # Pour CREATE, on utilise TeamCreateSerializer (avec les IDs)
-        # Pour le reste, on utilise TeamSerializer (avec objets complets)
         if self.action == 'create':
             return TeamCreateSerializer
         return TeamSerializer
-    
-    def create(self, request):
-        """
-        Créer un nouveau gâteau.
-        
-        Body JSON attendu:
-        {
-            "name": "Mon super gâteau",
-            "base_id": 1,
-            "filling_id": 2,
-            "cream_id": 3,   (optionnel)
-            "glaze_id": 4,    (optionnel)
-            "decoration_ids": [5, 6]  (optionnel, max 3)
-        }
-        """
+
+    async def list(self, request, *args, **kwargs):
+        player = await sync_to_async(lambda: request.user.player)()
+        qs = Team.objects.filter(owner=player).select_related(
+            'owner', 'owner__user',
+            'base', 'base__card',
+            'filling', 'filling__card',
+            'cream', 'cream__card',
+            'glaze', 'glaze__card',
+        ).prefetch_related('decorations', 'decorations__card')
+        teams = [team async for team in qs]
+        serializer = TeamSerializer(teams, many=True)
+        return Response(serializer.data)
+
+    async def create(self, request):
         serializer = TeamCreateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        # Récupérer le joueur
-        player = request.user.player
+        player = await sync_to_async(lambda: request.user.player)()
         
-        # Récupérer les cartes
         try:
-            base = CardInstance.objects.get(id=serializer.validated_data['base_id'], owner=player)
-            filling = CardInstance.objects.get(id=serializer.validated_data['filling_id'], owner=player)
+            base = await CardInstance.objects.aget(id=serializer.validated_data['base_id'], owner=player)
+            filling = await CardInstance.objects.aget(id=serializer.validated_data['filling_id'], owner=player)
             cream = None
             glaze = None
             
             if 'cream_id' in serializer.validated_data and serializer.validated_data['cream_id']:
-                cream = CardInstance.objects.get(id=serializer.validated_data['cream_id'], owner=player)
+                cream = await CardInstance.objects.aget(id=serializer.validated_data['cream_id'], owner=player)
             
             if 'glaze_id' in serializer.validated_data and serializer.validated_data['glaze_id']:
-                glaze = CardInstance.objects.get(id=serializer.validated_data['glaze_id'], owner=player)
+                glaze = await CardInstance.objects.aget(id=serializer.validated_data['glaze_id'], owner=player)
             
         except CardInstance.DoesNotExist:
             return Response({'error': 'Une ou plusieurs cartes n\'existent pas ou ne vous appartiennent pas'}, 
                           status=status.HTTP_400_BAD_REQUEST)
         
-        # Créer le gâteau
-        team = Team.objects.create(
+        team = await Team.objects.acreate(
             name=serializer.validated_data['name'],
             owner=player,
             base=base,
@@ -162,175 +141,161 @@ class TeamViewSet(viewsets.ModelViewSet):
             glaze=glaze
         )
         
-        # Ajouter les décorations
         if 'decoration_ids' in serializer.validated_data:
             decoration_ids = serializer.validated_data['decoration_ids']
             if len(decoration_ids) > 3:
-                team.delete()
+                await team.adelete()
                 return Response({'error': 'Maximum 3 décorations'}, status=status.HTTP_400_BAD_REQUEST)
             
             for deco_id in decoration_ids:
                 try:
-                    deco = CardInstance.objects.get(id=deco_id, owner=player)
-                    team.decorations.add(deco)
+                    deco = await CardInstance.objects.aget(id=deco_id, owner=player)
+                    await team.decorations.aadd(deco)
                 except CardInstance.DoesNotExist:
-                    team.delete()
+                    await team.adelete()
                     return Response({'error': f'Décoration {deco_id} n\'existe pas'}, 
                                   status=status.HTTP_400_BAD_REQUEST)
         
-        # Retourner le gâteau créé avec son score
         return Response(TeamSerializer(team).data, status=status.HTTP_201_CREATED)
     
     @action(detail=True, methods=['get'])
-    def score_details(self, request, pk=None):
-        """
-        Endpoint custom pour avoir les détails du score.
+    async def score_details(self, request, pk=None):
         
-        GET /api/teams/{id}/score_details/
-        
-        Retourne:
-        {
-            "score_brut": 120.50,
-            "bonus_synergies": 0.25,
-            "score_final": 150.63
-        }
-        """
-        team = self.get_object()
-        details = afficher_details_score(team)
+        team = await sync_to_async(self.get_object)()
+        details = await sync_to_async(afficher_details_score)(team)
         return Response(details)
 
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def get_adversary_teams(request):
-    """
-    Retourne tous les gâteaux créés par les autres joueurs (pas le joueur connecté).
-    """
-    current_player = request.user.player
-    adversary_teams = Team.objects.exclude(owner=current_player)
+async def get_adversary_teams(request):
+
+    current_player = await sync_to_async(lambda: request.user.player)()
+    adversary_teams = [team async for team in Team.objects.exclude(owner=current_player).select_related(
+        'owner', 'owner__user',
+        'base', 'base__card',
+        'filling', 'filling__card',
+        'cream', 'cream__card',
+        'glaze', 'glaze__card',
+    ).prefetch_related('decorations', 'decorations__card')]
     serializer = TeamSerializer(adversary_teams, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 #matchs
 class MatchViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet pour gérer les matchs.
-    
-    Endpoints disponibles:
-    - GET /api/matches/ → Liste mes matchs
-    - POST /api/matches/ → Lancer un nouveau match
-    - GET /api/matches/{id}/ → Détails d'un match
-    """
+
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        # Retourne les matchs où le joueur connecté est impliqué
-        player = self.request.user.player
-        return Match.objects.filter(
-            teamP1__owner=player
-        ) | Match.objects.filter(
-            teamP2__owner=player
-        )
-    
+        return Match.objects.none()
+
     def get_serializer_class(self):
         if self.action == 'create':
             return MatchCreateSerializer
         return MatchSerializer
-    
-    def create(self, request):
-        """
-        Lancer un nouveau match.
-        
-        Body JSON attendu:
-        {
-            "team1_id": 1,  (mon gâteau)
-            "team2_id": 5   (gâteau adverse)
-        }
-        """
+
+    async def list(self, request, *args, **kwargs):
+        from django.db.models import Q
+        player = await sync_to_async(lambda: request.user.player)()
+        team_related = [
+            'owner', 'owner__user',
+            'base', 'base__card',
+            'filling', 'filling__card',
+            'cream', 'cream__card',
+            'glaze', 'glaze__card',
+        ]
+        qs = Match.objects.filter(
+            Q(teamP1__owner=player) | Q(teamP2__owner=player)
+        ).select_related(
+            *['teamP1__' + r for r in team_related],
+            *['teamP2__' + r for r in team_related],
+            *['winner__' + r for r in team_related],
+        ).prefetch_related(
+            'teamP1__decorations', 'teamP1__decorations__card',
+            'teamP2__decorations', 'teamP2__decorations__card',
+            'winner__decorations', 'winner__decorations__card',
+        )
+        matches = [m async for m in qs]
+        serializer = MatchSerializer(matches, many=True)
+        return Response(serializer.data)
+
+    async def create(self, request):
+
         serializer = MatchCreateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Récupérer les gâteaux
+   
+        _team_qs = Team.objects.select_related(
+            'owner', 'base', 'base__card', 'filling', 'filling__card',
+            'cream', 'cream__card', 'glaze', 'glaze__card',
+        ).prefetch_related('decorations', 'decorations__card')
         try:
-            team1 = Team.objects.get(id=serializer.validated_data['team1_id'])
-            team2 = Team.objects.get(id=serializer.validated_data['team2_id'])
+            team1 = await _team_qs.aget(id=serializer.validated_data['team1_id'])
+            team2 = await _team_qs.aget(id=serializer.validated_data['team2_id'])
         except Team.DoesNotExist:
             return Response({'error': 'Un ou plusieurs gâteaux n\'existent pas'}, 
                           status=status.HTTP_400_BAD_REQUEST)
-        
-        # Calculer les scores
-        score1 = calculer_score_final(team1)
-        score2 = calculer_score_final(team2)
-        
-        # Déterminer le gagnant
+
+        score1 = await sync_to_async(calculer_score_final)(team1)
+        score2 = await sync_to_async(calculer_score_final)(team2)
+
         winner = team1 if score1 > score2 else team2
         loser = team2 if winner == team1 else team1
-        
-        # Gérer les gains/pertes d'argent
+   
         MONEY_WIN = 100
         MONEY_LOSS = 50
         
         winner.owner.money += MONEY_WIN
-        winner.owner.save()
+        await winner.owner.asave()
         
         loser.owner.money -= MONEY_LOSS
         if loser.owner.money < 0:
             loser.owner.money = 0
-        loser.owner.save()
-        
-        # Créer le match
-        match = Match.objects.create(
+        await loser.owner.asave()
+
+        match = await Match.objects.acreate(
             teamP1=team1,
             teamP2=team2,
             score_player1=score1,
             score_player2=score2,
             winner=winner
         )
-        
-        # Retourner le résultat avec les montants gagnés/perdus
+        _tr = ['owner', 'owner__user', 'base', 'base__card', 'filling', 'filling__card', 'cream', 'cream__card', 'glaze', 'glaze__card']
+        match = await Match.objects.select_related(
+            *['teamP1__' + r for r in _tr],
+            *['teamP2__' + r for r in _tr],
+            *['winner__' + r for r in _tr],
+        ).prefetch_related(
+            'teamP1__decorations', 'teamP1__decorations__card',
+            'teamP2__decorations', 'teamP2__decorations__card',
+            'winner__decorations', 'winner__decorations__card',
+        ).aget(id=match.id)
+
         response_data = MatchSerializer(match).data
         response_data['money_won'] = MONEY_WIN if winner == team1 else -MONEY_LOSS
         response_data['money_lost'] = -MONEY_LOSS if loser == team1 else MONEY_WIN
-        
+
         return Response(response_data, status=status.HTTP_201_CREATED)
 
 #packs
 class PackViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet pour gérer les packs.
-    
-    Endpoints disponibles:
-    - GET /api/packs/ → Liste des packs disponibles
-    - GET /api/packs/{id}/ → Détails d'un pack
-    - POST /api/packs/{id}/open/ → Ouvrir un pack
-    """
+
     queryset = Pack.objects.all()
     serializer_class = PackSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     @action(detail=True, methods=['post'])
-    def open(self, request, pk=None):
-        """
-        Ouvrir un pack et recevoir des cartes aléatoires.
-        
-        POST /api/packs/{id}/open/
-        
-        Retourne:
-        {
-            "cards": [...],  // Les cartes obtenues
-            "message": "Vous avez obtenu 5 cartes!"
-        }
-        """
-        pack = self.get_object()
-        player = request.user.player
+    async def open(self, request, pk=None):
+
+        pack = await sync_to_async(self.get_object)()
+        player = await sync_to_async(lambda: request.user.player)()
 
         # Limite d'inventaire: maximum 40 cartes
-        inventory_count = CardInstance.objects.filter(owner=player).count()
+        inventory_count = await CardInstance.objects.filter(owner=player).acount()
         available_slots = MAX_INVENTORY_CARDS - inventory_count
         if available_slots <= 0:
             return Response(
@@ -344,21 +309,17 @@ class PackViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # ✅ Vérifier que le joueur a assez d'argent
         if player.money < pack.cost:
             return Response(
                 {'error': f'Vous n\'avez pas assez d\'argent. Coût: {pack.cost}, Argent: {player.money}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # 💰 Déduire l'argent
         player.money -= pack.cost
-        player.save()
+        await player.asave()
         
-        # 🎰 Générer des cartes aléatoires
         cards_obtained = []
-        
-        # Probabilités selon la rareté du pack
+
         rarity_probabilities = {
             'bronze': {
                 'common': 0.80,
@@ -382,9 +343,7 @@ class PackViewSet(viewsets.ReadOnlyModelViewSet):
         
         probabilities = rarity_probabilities.get(pack.level, rarity_probabilities['bronze'])
         
-        # Générer les cartes
         for _ in range(pack.cards_count):
-            # Choisir la rareté aléatoirement selon les probabilités
             rand = random.random()
             cumulative = 0
             rarity = 'common'
@@ -395,14 +354,12 @@ class PackViewSet(viewsets.ReadOnlyModelViewSet):
                     rarity = rar
                     break
             
-            # Chercher une carte avec cette rareté
-            available_cards = Card.objects.filter(rarity=rarity)
-            if available_cards.exists():
+            available_cards = [card async for card in Card.objects.filter(rarity=rarity)]
+            if available_cards:
                 card = random.choice(available_cards)
-                card_instance = CardInstance.objects.create(card=card, owner=player)
+                card_instance = await CardInstance.objects.acreate(card=card, owner=player)
                 cards_obtained.append(card_instance)
         
-        # Retourner les cartes
         serializer = PackOpenSerializer({
             'cards': cards_obtained,
             'message': f'Félicitations! Vous avez obtenu {len(cards_obtained)} cartes!'
@@ -411,83 +368,81 @@ class PackViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# Merge cards functionality
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def merge_cards(request):
-    """
-    Fusionne deux instances de la même carte pour obtenir une carte avec le double du niveau.
-    
-    Body JSON attendu:
-    {
-        "card_instance_id_1": 1,
-        "card_instance_id_2": 2
-    }
-    
-    Retourne la carte fusionnée avec le niveau doublé.
-    """
-    player = request.user.player
-    
-    # Récupérer les IDs des deux cartes
+async def merge_cards(request):
+
+    player = await sync_to_async(lambda: request.user.player)()
+
     card_id_1 = request.data.get('card_instance_id_1')
     card_id_2 = request.data.get('card_instance_id_2')
-    
+
     if not card_id_1 or not card_id_2:
         return Response(
             {'error': 'Vous devez fournir deux IDs de cartes'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     try:
-        # Récupérer les deux cartes
-        card_1 = CardInstance.objects.get(id=card_id_1, owner=player)
-        card_2 = CardInstance.objects.get(id=card_id_2, owner=player)
-        
+        card_1 = await CardInstance.objects.select_related('card').aget(id=card_id_1, owner=player)
+        card_2 = await CardInstance.objects.select_related('card').aget(id=card_id_2, owner=player)
     except CardInstance.DoesNotExist:
         return Response(
             {'error': 'Une ou plusieurs cartes n\'existent pas ou ne vous appartiennent pas'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    # Vérifier que c'est la même carte
+
     if card_1.card.id != card_2.card.id:
         return Response(
             {'error': 'Vous ne pouvez fusionner que deux cartes identiques'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    # Fusionner les cartes
-    # La card_1 garde le niveau doublé
-    card_1.level = card_1.level + card_2.level
-    card_1.save()
-    
-    # Supprimer la card_2
-    card_2.delete()
-    
-    # Retourner la carte fusionnée
+
+    # ── Calcul du nouveau niveau ──────────────────────────────
+    new_level = card_1.level + card_2.level
+
+    # ── Boost des stats : +10% par niveau au-dessus de 1 ─────
+    # Exemple : niveau 2 → ×1.10, niveau 4 → ×1.30
+    boost = 1 + (new_level - 1) * 0.10
+
+    base_card = card_1.card
+    card_1.level = new_level
+
+    # On stocke les stats boostées directement sur la CardInstance
+    # via des champs bonus (on les calcule et on les renvoie dans la réponse)
+    boosted_gout       = round(base_card.gout       * boost)
+    boosted_technique  = round(base_card.technique  * boost)
+    boosted_esthetique = round(base_card.esthetique * boost)
+
+    await card_1.asave()
+    await card_2.adelete()
+
     serializer = CardInstanceSerializer(card_1)
     return Response(
         {
-            'message': f'Cartes fusionnées avec succès! Niveau: {card_1.level}',
-            'merged_card': serializer.data
+            'message': f'Fusion réussie ! Niveau {new_level} (+{round((boost - 1) * 100)}% de stats)',
+            'merged_card': serializer.data,
+            'stats_boostees': {
+                'niveau':      new_level,
+                'boost':       f'+{round((boost - 1) * 100)}%',
+                'gout':        boosted_gout,
+                'technique':   boosted_technique,
+                'esthetique':  boosted_esthetique,
+            }
         },
         status=status.HTTP_200_OK
     )
 
-
-# Marketplace functionality
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def list_marketplace_listings(request):
-    """
-    Liste toutes les annonces actives de la marketplace.
-    Chaque joueur peut voir les cartes des autres en vente.
-    """
-    # Récupérer toutes les annonces actives (pas les cartes du joueur connecté)
-    listings = MarketplaceListing.objects.filter(status='active').exclude(seller=request.user.player)
-    
+async def list_marketplace_listings(request):
+
+    player = await sync_to_async(lambda: request.user.player)()
+    _listing_related = ('card_instance', 'card_instance__card', 'seller', 'seller__user', 'buyer', 'buyer__user')
+    listings = [listing async for listing in MarketplaceListing.objects.filter(status='active').exclude(seller=player).select_related(*_listing_related)]
+
     serializer = MarketplaceListingSerializer(listings, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -495,12 +450,11 @@ def list_marketplace_listings(request):
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def list_own_marketplace_listings(request):
-    """
-    Liste les annonces du joueur connecté (ses ventes en cours ou terminées).
-    """
-    player = request.user.player
-    listings = MarketplaceListing.objects.filter(seller=player)
+async def list_own_marketplace_listings(request):
+
+    player = await sync_to_async(lambda: request.user.player)()
+    _listing_related = ('card_instance', 'card_instance__card', 'seller', 'seller__user', 'buyer', 'buyer__user')
+    listings = [listing async for listing in MarketplaceListing.objects.filter(seller=player).select_related(*_listing_related)]
     
     serializer = MarketplaceListingSerializer(listings, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -509,17 +463,9 @@ def list_own_marketplace_listings(request):
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def create_marketplace_listing(request):
-    """
-    Crée une nouvelle annonce de vente pour une carte.
-    
-    Body JSON attendu:
-    {
-        "card_instance_id": 1,
-        "price": 500
-    }
-    """
-    player = request.user.player
+async def create_marketplace_listing(request):
+
+    player = await sync_to_async(lambda: request.user.player)()
     
     serializer = MarketplaceListingCreateSerializer(data=request.data)
     if not serializer.is_valid():
@@ -530,7 +476,7 @@ def create_marketplace_listing(request):
     
     # Vérifier que la carte appartient au joueur
     try:
-        card_instance = CardInstance.objects.get(id=card_instance_id, owner=player)
+        card_instance = await CardInstance.objects.select_related('card').aget(id=card_instance_id, owner=player)
     except CardInstance.DoesNotExist:
         return Response(
             {'error': 'Cette carte n\'existe pas ou ne vous appartient pas'},
@@ -538,10 +484,10 @@ def create_marketplace_listing(request):
         )
     
     # Vérifier qu'il n'y a pas déjà une annonce active pour cette carte
-    existing_listing = MarketplaceListing.objects.filter(
+    existing_listing = await MarketplaceListing.objects.filter(
         card_instance=card_instance,
         status='active'
-    ).exists()
+    ).aexists()
     
     if existing_listing:
         return Response(
@@ -550,24 +496,27 @@ def create_marketplace_listing(request):
         )
     
     # Vérifier que la carte n'est pas utilisée dans une équipe
-    if (card_instance.team_base.exists() or 
-        card_instance.team_cream.exists() or 
-        card_instance.team_filling.exists() or 
-        card_instance.team_glaze.exists() or 
-        card_instance.team_decorations.exists()):
+    if (await card_instance.team_base.aexists() or 
+        await card_instance.team_cream.aexists() or 
+        await card_instance.team_filling.aexists() or 
+        await card_instance.team_glaze.aexists() or 
+        await card_instance.team_decorations.aexists()):
         return Response(
             {'error': 'Vous ne pouvez pas vendre une carte en cours d\'utilisation dans une équipe'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
     # Créer l'annonce
-    listing = MarketplaceListing.objects.create(
+    listing = await MarketplaceListing.objects.acreate(
         card_instance=card_instance,
         seller=player,
         price=price,
         status='active'
     )
-    
+    listing = await MarketplaceListing.objects.select_related(
+        'card_instance', 'card_instance__card', 'seller', 'seller__user', 'buyer', 'buyer__user'
+    ).aget(id=listing.id)
+
     serializer = MarketplaceListingSerializer(listing)
     return Response(
         {
@@ -581,14 +530,12 @@ def create_marketplace_listing(request):
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def buy_marketplace_listing(request, listing_id):
-    """
-    Achète une carte de la marketplace.
-    """
-    buyer = request.user.player
+async def buy_marketplace_listing(request, listing_id):
+
+    buyer = await sync_to_async(lambda: request.user.player)()
 
     # Limite d'inventaire: maximum 40 cartes
-    inventory_count = CardInstance.objects.filter(owner=buyer).count()
+    inventory_count = await CardInstance.objects.filter(owner=buyer).acount()
     if inventory_count >= MAX_INVENTORY_CARDS:
         return Response(
             {'error': f'Inventaire plein ({MAX_INVENTORY_CARDS} cartes maximum). Fusionnez/vendez des cartes avant d\'acheter.'},
@@ -596,48 +543,46 @@ def buy_marketplace_listing(request, listing_id):
         )
     
     try:
-        listing = MarketplaceListing.objects.get(id=listing_id, status='active')
+        listing = await MarketplaceListing.objects.select_related(
+            'seller', 'card_instance', 'card_instance__card', 'buyer', 'buyer__user'
+        ).aget(id=listing_id, status='active')
     except MarketplaceListing.DoesNotExist:
         return Response(
             {'error': 'Cette annonce n\'existe pas ou n\'est pas disponible'},
             status=status.HTTP_404_NOT_FOUND
         )
     
-    # Vérifier que c'est un autre joueur
     if listing.seller == buyer:
         return Response(
             {'error': 'Vous ne pouvez pas acheter votre propre carte'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Vérifier que l'acheteur a assez d'argent
     if buyer.money < listing.price:
         return Response(
             {'error': f'Vous n\'avez pas assez d\'argent. Vous en avez {buyer.money}, le prix est {listing.price}'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Transférer la carte
     seller = listing.seller
     card_instance = listing.card_instance
     
-    # Déduire l'argent de l'acheteur
     buyer.money -= listing.price
-    buyer.save()
-    
-    # Ajouter l'argent au vendeur (on peut aussi prendre une commission)
+    await buyer.asave()
+
     seller.money += listing.price
-    seller.save()
+    await seller.asave()
     
-    # Transférer la propriété de la carte
     card_instance.owner = buyer
-    card_instance.save()
+    await card_instance.asave()
     
-    # Marquer l'annonce comme vendue
     listing.status = 'sold'
     listing.buyer = buyer
-    listing.save()
+    await listing.asave()
     
+    listing = await MarketplaceListing.objects.select_related(
+        'card_instance', 'card_instance__card', 'seller', 'seller__user', 'buyer', 'buyer__user'
+    ).aget(id=listing.id)
     serializer = MarketplaceListingSerializer(listing)
     return Response(
         {
@@ -651,15 +596,11 @@ def buy_marketplace_listing(request, listing_id):
 @api_view(['DELETE'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def cancel_marketplace_listing(request, listing_id):
-    """
-    Annule/supprime une annonce de vente.
-    Seul le vendeur peut annuler son annonce.
-    """
-    seller = request.user.player
+async def cancel_marketplace_listing(request, listing_id):
+    seller = await sync_to_async(lambda: request.user.player)()
     
     try:
-        listing = MarketplaceListing.objects.get(id=listing_id, seller=seller)
+        listing = await MarketplaceListing.objects.aget(id=listing_id, seller=seller)
     except MarketplaceListing.DoesNotExist:
         return Response(
             {'error': 'Cette annonce n\'existe pas ou ne vous appartient pas'},
@@ -672,9 +613,8 @@ def cancel_marketplace_listing(request, listing_id):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Annuler l'annonce
     listing.status = 'cancelled'
-    listing.save()
+    await listing.asave()
     
     return Response(
         {
