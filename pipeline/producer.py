@@ -196,10 +196,13 @@ def event_marketplace(player, instances):
         "price":             price,
     }
 
-# ─── Point d'entrée ────────────────────────────────────────────
 if __name__ == "__main__":
-    spark = SparkSession.builder.appName("PastryProducer").getOrCreate()
-    spark.sparkContext.setLogLevel("WARN")
+    spark = SparkSession.builder \
+        .appName("PastryProducer") \
+        .config("spark.ui.enabled", "false") \
+        .config("spark.sql.shuffle.partitions", "2") \
+        .getOrCreate()
+    spark.sparkContext.setLogLevel("ERROR")
 
     players, cards_by_rarity, packs, teams, instances = load_data()
 
@@ -208,58 +211,27 @@ if __name__ == "__main__":
         spark.stop()
         exit()
 
-    print("\nProducer démarré — envoi d'événements toutes les 2 secondes...\n")
+    print("\nProducer démarré — envoi de packs en masse...\n")
 
-    # Séquence cyclique des types d'événements
-    event_sequence = ["pack", "pack", "pack", "player", "team", "match", "marketplace"]
-    idx = 0
+    BATCH_SIZE = 500
+    batch_num  = 0
 
     while True:
-        event_type = event_sequence[idx % len(event_sequence)]
-        idx += 1
+        batch_num += 1
 
-        if event_type == "pack" and packs:
+        events = []
+        for _ in range(BATCH_SIZE):
             player = random.choice(players)
             pack   = random.choice(packs)
-            event  = event_pack_opening(player, pack, cards_by_rarity)
-            send(spark, TOPICS["packs"], event)
-            rarities = [c["rarity"] for c in event["cards_obtained"]]
-            print(f"[PACK]        {player['username']} ouvre un {pack['level'].upper()} ({len(rarities)} cartes) : {', '.join(rarities)}")
+            events.append(json.dumps(
+                event_pack_opening(player, pack, cards_by_rarity),
+                ensure_ascii=False
+            ))
 
-        elif event_type == "player":
-            event = event_player_created()
-            send(spark, TOPICS["players"], event)
-            print(f"[PLAYER]      Nouveau joueur : {event['username']}")
+        spark.createDataFrame([(e,) for e in events], ["value"]) \
+             .write.format("kafka") \
+             .option("kafka.bootstrap.servers", KAFKA_SERVER) \
+             .option("topic", TOPICS["packs"]) \
+             .save()
 
-        elif event_type == "team" and players:
-            player = random.choice(players)
-            # Recharge les instances pour avoir les données fraîches
-            _, _, _, _, instances = load_data()
-            event = event_team_created(player, instances)
-            if event:
-                send(spark, TOPICS["teams"], event)
-                print(f"[TEAM]        {player['username']} crée {event['team_name']}")
-            else:
-                print(f"[TEAM]        {player['username']} n'a pas assez de cartes — ignoré")
-
-        elif event_type == "match":
-            # Recharge les équipes
-            _, _, _, teams, _ = load_data()
-            event = event_match_played(teams)
-            if event:
-                send(spark, TOPICS["matches"], event)
-                print(f"[MATCH]       {event['team1']['name']} vs {event['team2']['name']} → scores {event['score_team1']}/{event['score_team2']}")
-            else:
-                print(f"[MATCH]       Pas assez d'équipes — ignoré")
-
-        elif event_type == "marketplace" and players:
-            player = random.choice(players)
-            _, _, _, _, instances = load_data()
-            event = event_marketplace(player, instances)
-            if event:
-                send(spark, TOPICS["marketplace"], event)
-                print(f"[MARKETPLACE] {player['username']} vend {event['card_name']} pour {event['price']} coins")
-            else:
-                print(f"[MARKETPLACE] {player['username']} n'a pas de cartes à vendre — ignoré")
-
-        time.sleep(2)
+        print(f"Batch {batch_num} → {BATCH_SIZE} events envoyés → pastry-events")

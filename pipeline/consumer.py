@@ -354,12 +354,18 @@ def make_process_batch(handler):
 
 # ─── Point d'entrée ────────────────────────────────────────────
 if __name__ == "__main__":
+    #Ca build une session Spark et démarre un stream pour chaque topic, avec le handler approprié
     spark = SparkSession.builder \
         .appName("PastryConsumer") \
         .getOrCreate()
+    # On met le log level à WARN pour éviter les messages d'info de Kafka à chaque batch
     spark.sparkContext.setLogLevel("WARN")
 
     def read_topic(topic, schema):
+        # Lit un topic Kafka, parse le JSON et retourne un DataFrame structuré
+        #On dit que la source de données c'est kafka
+        #On configure la connexion au serveur Kafka et le topic à écouter
+        # dpuis le tout premier message envoyé dans le topic
         return spark.readStream \
             .format("kafka") \
             .option("kafka.bootstrap.servers", KAFKA_SERVER) \
